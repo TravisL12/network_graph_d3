@@ -1,12 +1,8 @@
 import * as d3 from "d3";
 import { useCallback, useEffect, useRef } from "react";
 
-export const mainWidth = 600;
-export const mainHeight = 600;
-export const margin = { top: 0, right: 0, bottom: 0, left: 0 };
-
-const width = mainWidth - margin.left - margin.right;
-const height = mainHeight - margin.top - margin.bottom;
+const width = 1000;
+const height = 600;
 
 const CIRCLE_BASE_RADIUS = 20;
 const CIRCLE_RADIUS_MULTIPLIER = 3;
@@ -14,35 +10,26 @@ const CIRCLE_RADIUS_MULTIPLIER = 3;
 function NetworkGraph({ data }) {
   const graphRef = useRef();
 
-  useEffect(() => {
-    const main = d3
-      .select(graphRef.current)
-      .attr("width", mainWidth)
-      .attr("height", mainHeight)
-      .style("background", "#eee")
-      .append("g")
-      .attr("class", "main")
-      .attr("transform", `translate(${margin.left}, ${margin.top})`);
+  const ticked = (link, node) => {
+    link
+      .attr("x1", ({ source }) => source.x)
+      .attr("y1", ({ source }) => source.y)
+      .attr("x2", ({ target }) => target.x)
+      .attr("y2", ({ target }) => target.y);
 
-    main.append("g").attr("class", "lines");
-    main.append("g").attr("class", "nodes");
-  }, []);
+    node
+      .selectAll("circle")
+      .attr("cx", ({ x }) => x + 6)
+      .attr("cy", ({ y }) => y - 6);
+
+    node
+      .selectAll("text")
+      .attr("x", ({ x }) => x + 6)
+      .attr("y", ({ y }) => y);
+  };
 
   const draw = useCallback(() => {
     const svg = d3.select(graphRef.current);
-    d3.forceSimulation(data.nodes)
-      .force(
-        "link",
-        d3
-          .forceLink()
-          .id(function (d) {
-            return d.id;
-          })
-          .links(data.links)
-      )
-      .force("charge", d3.forceManyBody().strength(-1000))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .on("end", ticked);
 
     const link = svg
       .selectAll(".lines")
@@ -51,7 +38,6 @@ function NetworkGraph({ data }) {
       .join("line")
       .style("stroke", "#aaa");
 
-    // Initialize the nodes
     const node = svg
       .selectAll(".nodes")
       .selectAll("circle")
@@ -64,51 +50,41 @@ function NetworkGraph({ data }) {
             const links = data.links.filter((link) => link.source === d.id);
             return CIRCLE_BASE_RADIUS + links.length * CIRCLE_RADIUS_MULTIPLIER;
           })
-          .style("fill", (d) => d.color || "#69b3a2")
-          .call((e) => e.transition());
+          .style("fill", (d) => d.color || "#69b3a2");
 
         g.append("text")
-          .text((d) => d.name)
+          .text((d) => d.id)
           .join("text")
           .attr("text-anchor", "middle");
 
         return g;
       });
 
-    function ticked() {
-      link
-        .attr("x1", function (d) {
-          return d.source.x;
-        })
-        .attr("y1", function (d) {
-          return d.source.y;
-        })
-        .attr("x2", function (d) {
-          return d.target.x;
-        })
-        .attr("y2", function (d) {
-          return d.target.y;
-        });
-
-      node
-        .selectAll("circle")
-        .attr("cx", function (d) {
-          return d.x + 6;
-        })
-        .attr("cy", function (d) {
-          return d.y - 6;
-        });
-
-      node
-        .selectAll("text")
-        .attr("x", function (d) {
-          return d.x + 6;
-        })
-        .attr("y", function (d) {
-          return d.y;
-        });
-    }
+    d3.forceSimulation(data.nodes)
+      .force(
+        "link",
+        d3
+          .forceLink()
+          .id(({ id }) => id)
+          .links(data.links)
+      )
+      .force("charge", d3.forceManyBody().strength(-1000))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .on("end", () => ticked(link, node));
   }, [data.links, data.nodes]);
+
+  useEffect(() => {
+    const main = d3
+      .select(graphRef.current)
+      .attr("width", width)
+      .attr("height", height)
+      .style("background", "#eee")
+      .append("g")
+      .attr("class", "main");
+
+    main.append("g").attr("class", "lines");
+    main.append("g").attr("class", "nodes");
+  }, []);
 
   useEffect(() => draw(), [draw]);
 
