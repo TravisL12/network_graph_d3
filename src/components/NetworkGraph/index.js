@@ -19,7 +19,8 @@ const CIRCLE_BASE_RADIUS = 20;
 function positionLink(d) {
   const dx = d.target.x - d.source.x;
   const dy = d.target.y - d.source.y;
-  const dr = Math.sqrt(dx * dx + dy * dy);
+  const curveRate = 1; // smaller curve rate makes curvier lines
+  const dr = Math.sqrt(dx * dx + dy * dy) * curveRate;
   return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
 }
 

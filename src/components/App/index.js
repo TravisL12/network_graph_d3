@@ -20,7 +20,8 @@ const SSidebarInner = styled.div`
   background: white;
   height: 100%;
   border: 4px solid #4e4e4e;
-  border-radius: 5px;
+  box-shadow: 0 0 0 0 #4e4e4e;
+  border-radius: 10px;
 `;
 
 const App = () => {
