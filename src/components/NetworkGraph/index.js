@@ -2,10 +2,10 @@ import * as d3 from "d3";
 import { useCallback, useEffect, useRef } from "react";
 
 const width = 1000;
-const height = 600;
+const height = 1000;
 
 const CIRCLE_BASE_RADIUS = 20;
-const CIRCLE_RADIUS_MULTIPLIER = 3;
+const CIRCLE_RADIUS_MULTIPLIER = 2;
 
 function NetworkGraph({ data }) {
   const graphRef = useRef();
@@ -68,7 +68,7 @@ function NetworkGraph({ data }) {
           .id(({ id }) => id)
           .links(data.links)
       )
-      .force("charge", d3.forceManyBody().strength(-1000))
+      .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2))
       .on("tick", () => ticked(link, node));
   }, [data.links, data.nodes]);
