@@ -70,7 +70,7 @@ function NetworkGraph({ data }) {
       )
       .force("charge", d3.forceManyBody().strength(-1000))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .on("end", () => ticked(link, node));
+      .on("tick", () => ticked(link, node));
   }, [data.links, data.nodes]);
 
   useEffect(() => {
@@ -90,10 +90,7 @@ function NetworkGraph({ data }) {
 
   return (
     <div>
-      This is a graph
-      <div>
-        <svg ref={graphRef}></svg>
-      </div>
+      <svg ref={graphRef}></svg>
     </div>
   );
 }
