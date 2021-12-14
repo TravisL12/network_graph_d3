@@ -5,10 +5,20 @@ const width = 1000;
 const height = 1000;
 
 const CIRCLE_BASE_RADIUS = 20;
-const CIRCLE_RADIUS_MULTIPLIER = 2;
+
+function positionLink(d) {
+  const dx = d.target.x - d.source.x;
+  const dy = d.target.y - d.source.y;
+  const dr = Math.sqrt(dx * dx + dy * dy);
+  return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+}
 
 function NetworkGraph({ data }) {
   const graphRef = useRef();
+
+  const color = d3
+    .scaleOrdinal(d3.schemeCategory10)
+    .domain(data.nodes.map(({ id }) => id));
 
   const ticked = (link, node) => {
     link
@@ -29,22 +39,32 @@ function NetworkGraph({ data }) {
       .attr("y", ({ y }) => y);
   };
 
-  function positionLink(d) {
-    const dx = d.target.x - d.source.x;
-    const dy = d.target.y - d.source.y;
-    const dr = Math.sqrt(dx * dx + dy * dy);
-    return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
-  }
-
   const draw = useCallback(() => {
     const svg = d3.select(graphRef.current);
+
+    const dragstarted = (event) => {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      event.fx = event.x;
+      event.fy = event.y;
+    };
+
+    const dragged = (event) => {
+      event.fx = event.x;
+      event.fy = event.y;
+    };
+
+    const dragended = (event) => {
+      if (!event.active) simulation.alphaTarget(0);
+      event.fx = null;
+      event.fy = null;
+    };
 
     const link = svg
       .selectAll(".lines")
       .selectAll("path")
       .data(data.links)
       .join("path")
-      .style("stroke", "#aaa")
+      .attr("stroke", (d) => color(d.id))
       .style("stroke-width", "1px")
       .style("fill", "none");
 
@@ -56,21 +76,28 @@ function NetworkGraph({ data }) {
         const g = enter.append("g");
 
         g.append("circle")
-          .attr("r", (d) => {
-            const links = data.links.filter((link) => link.source === d.id);
-            return CIRCLE_BASE_RADIUS + links.length * CIRCLE_RADIUS_MULTIPLIER;
-          })
-          .style("fill", (d) => d.color || "#69b3a2");
+          .attr("r", CIRCLE_BASE_RADIUS)
+          .style("fill", (d) => color(d.id));
 
         g.append("text")
           .text((d) => d.id)
           .join("text")
+          .style("font-size", "12px")
           .attr("text-anchor", "middle");
+
+        g.call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        );
 
         return g;
       });
 
-    d3.forceSimulation(data.nodes)
+    const simulation = d3
+      .forceSimulation(data.nodes)
       .force(
         "link",
         d3
