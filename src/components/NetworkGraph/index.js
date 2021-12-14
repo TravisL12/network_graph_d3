@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef } from "react";
 import styled from "styled-components";
 
 const StyledSVGContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
   vertical-align: top;
@@ -121,7 +124,7 @@ function NetworkGraph({ data }) {
           .links(data.links)
       )
       .force("charge", d3.forceManyBody().strength(-1000))
-      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("center", d3.forceCenter(width * (3 / 5), height / 2))
       .on("tick", () => ticked(link, node));
   }, [data.links, data.nodes]);
 
