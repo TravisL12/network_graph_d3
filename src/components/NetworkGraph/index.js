@@ -39,6 +39,14 @@ function NetworkGraph({ data }) {
       .attr("y", ({ y }) => y);
   };
 
+  // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
+  function positionLink(d) {
+    const dx = d.target.x - d.source.x;
+    const dy = d.target.y - d.source.y;
+    const dr = Math.sqrt(dx * dx + dy * dy);
+    return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+  }
+
   const draw = useCallback(() => {
     const svg = d3.select(graphRef.current);
 
