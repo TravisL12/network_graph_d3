@@ -2,11 +2,11 @@ function randomizer(max = 1, min = 0) {
   return Math.round(Math.random() * (max - min) + min);
 }
 
-const childMax = 3;
+const childMax = 4;
 
 const buildNodes = (parentNode, nodes = [], links = [], level = 0) => {
   const kids = [];
-  for (let j = 0; j < childMax; j++) {
+  for (let j = 0; j < childMax + level; j++) {
     const childNode = { id: randomizer(10000) };
     const link = {
       source: parentNode.id,
