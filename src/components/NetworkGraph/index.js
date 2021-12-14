@@ -1,17 +1,31 @@
 import * as d3 from "d3";
+import throttle from "lodash.throttle";
 import { useCallback, useEffect, useRef } from "react";
+import styled from "styled-components";
 
-const width = 1000;
-const height = 1000;
+const StyledSVGContainer = styled.div`
+  width: 100vw;
+  height: 100vh;
+  vertical-align: top;
+  overflow: hidden;
+`;
 
 const CIRCLE_BASE_RADIUS = 20;
 
+// https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
 function positionLink(d) {
   const dx = d.target.x - d.source.x;
   const dy = d.target.y - d.source.y;
   const dr = Math.sqrt(dx * dx + dy * dy);
   return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
 }
+
+const getHeightWidth = () => {
+  const g = document.body;
+  const width = g.clientWidth;
+  const height = g.clientHeight;
+  return { width, height };
+};
 
 function NetworkGraph({ data }) {
   const graphRef = useRef();
@@ -38,14 +52,6 @@ function NetworkGraph({ data }) {
       .attr("x", ({ x }) => x + 6)
       .attr("y", ({ y }) => y);
   };
-
-  // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
-  function positionLink(d) {
-    const dx = d.target.x - d.source.x;
-    const dy = d.target.y - d.source.y;
-    const dr = Math.sqrt(dx * dx + dy * dy);
-    return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
-  }
 
   const draw = useCallback(() => {
     const svg = d3.select(graphRef.current);
@@ -104,6 +110,7 @@ function NetworkGraph({ data }) {
         return g;
       });
 
+    const { width, height } = getHeightWidth();
     const simulation = d3
       .forceSimulation(data.nodes)
       .force(
@@ -118,25 +125,33 @@ function NetworkGraph({ data }) {
       .on("tick", () => ticked(link, node));
   }, [data.links, data.nodes]);
 
+  const updateWindow = useCallback(() => {
+    const svg = d3.select(graphRef.current);
+    const { width, height } = getHeightWidth();
+
+    svg.attr("width", width).attr("height", height);
+  }, []);
+
+  const throttledResize = throttle(updateWindow, 100);
+
   useEffect(() => {
-    const main = d3
-      .select(graphRef.current)
-      .attr("width", width)
-      .attr("height", height)
-      .style("background", "#eee")
-      .append("g")
-      .attr("class", "main");
+    const svg = d3.select(graphRef.current);
+    const main = svg.append("g").attr("class", "main");
 
     main.append("g").attr("class", "lines");
     main.append("g").attr("class", "nodes");
+
+    updateWindow();
+
+    window.addEventListener("resize", throttledResize);
   }, []);
 
   useEffect(() => draw(), [draw]);
 
   return (
-    <div>
+    <StyledSVGContainer>
       <svg ref={graphRef}></svg>
-    </div>
+    </StyledSVGContainer>
   );
 }
 
