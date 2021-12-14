@@ -2,9 +2,9 @@ import NetworkGraph from "../NetworkGraph";
 import styled from "styled-components";
 import { buildNetworkData } from "../../getData";
 
-const SNetworkContainer = styled.div`
+const SAppContainer = styled.div`
   position: relative;
-  height: 100%;
+  height: 100vh;
   width: 100vw;
   background: #eee;
 `;
@@ -25,7 +25,7 @@ const SSidebarInner = styled.div`
 
 const App = () => {
   return (
-    <SNetworkContainer>
+    <SAppContainer>
       <NetworkGraph data={buildNetworkData()} />
       <SSidebarContainer>
         <SSidebarInner>
@@ -37,7 +37,7 @@ const App = () => {
           </ul>
         </SSidebarInner>
       </SSidebarContainer>
-    </SNetworkContainer>
+    </SAppContainer>
   );
 };
 
