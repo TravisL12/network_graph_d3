@@ -15,7 +15,8 @@ function NetworkGraph({ data }) {
       .attr("x1", ({ source }) => source.x)
       .attr("y1", ({ source }) => source.y)
       .attr("x2", ({ target }) => target.x)
-      .attr("y2", ({ target }) => target.y);
+      .attr("y2", ({ target }) => target.y)
+      .attr("d", positionLink);
 
     node
       .selectAll("circle")
@@ -28,15 +29,24 @@ function NetworkGraph({ data }) {
       .attr("y", ({ y }) => y);
   };
 
+  function positionLink(d) {
+    const dx = d.target.x - d.source.x;
+    const dy = d.target.y - d.source.y;
+    const dr = Math.sqrt(dx * dx + dy * dy);
+    return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+  }
+
   const draw = useCallback(() => {
     const svg = d3.select(graphRef.current);
 
     const link = svg
       .selectAll(".lines")
-      .selectAll("line")
+      .selectAll("path")
       .data(data.links)
-      .join("line")
-      .style("stroke", "#aaa");
+      .join("path")
+      .style("stroke", "#aaa")
+      .style("stroke-width", "1px")
+      .style("fill", "none");
 
     const node = svg
       .selectAll(".nodes")
@@ -68,7 +78,7 @@ function NetworkGraph({ data }) {
           .id(({ id }) => id)
           .links(data.links)
       )
-      .force("charge", d3.forceManyBody().strength(-500))
+      .force("charge", d3.forceManyBody().strength(-1000))
       .force("center", d3.forceCenter(width / 2, height / 2))
       .on("tick", () => ticked(link, node));
   }, [data.links, data.nodes]);
