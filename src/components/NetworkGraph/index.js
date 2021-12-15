@@ -65,7 +65,7 @@ function NetworkGraph({ data }) {
       .selectAll("path")
       .data(data.links)
       .join("path")
-      .attr("stroke", (d) => color(d.id))
+      .attr("stroke", "white")
       .style("stroke-width", "1px")
       .style("fill", "none");
 
@@ -84,14 +84,15 @@ function NetworkGraph({ data }) {
           .text((d) => d.id)
           .join("text")
           .style("font-size", "12px")
-          .attr("text-anchor", "middle");
+          .attr("fill", "white")
+          .attr("text-anchor", "middle")
+          .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS + 10})`);
 
         return g;
       });
 
     const { width, height } = getHeightWidth();
-    const simulation = d3
-      .forceSimulation(data.nodes)
+    d3.forceSimulation(data.nodes)
       .force(
         "link",
         d3
