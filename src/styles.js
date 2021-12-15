@@ -10,8 +10,12 @@ const gyanColors = {
 export const SAppContainer = styled.div`
   height: 100vh;
   width: 100vw;
-  background: #2a3747;
-  color: white;
+  background: radial-gradient(
+    64.7% 64.7% at 51.8% 62.15%,
+    #d8f4db 1.68%,
+    rgba(225, 244, 216, 0.75) 44.43%,
+    #e2faf8 89.7%
+  );
 `;
 
 export const StyledAppInner = styled.div`
@@ -49,11 +53,8 @@ export const SSidebarInner = styled.div`
   height: 100%;
   width: 100%;
   border-radius: 6px;
-  background: linear-gradient(
-    171.36deg,
-    ${gyanColors.darkBlueGray} 0%,
-    ${gyanColors.otherTealGradient} 100%
-  );
+  background: rgba(171, 218, 220, 0.5);
+  backdrop-filter: blur(60px);
 `;
 
 export const StyledSVGContainer = styled.div`

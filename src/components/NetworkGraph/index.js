@@ -94,7 +94,7 @@ function NetworkGraph({ data }) {
       .selectAll("path")
       .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
       .join("path")
-      .attr("stroke", "white")
+      .attr("stroke", "#177E89")
       .style("stroke-width", "1px")
       .style("fill", "none");
 
@@ -118,7 +118,7 @@ function NetworkGraph({ data }) {
           .text((d) => d.data.id)
           .join("text")
           .style("font-size", `12px`)
-          .attr("fill", "white")
+          .attr("fill", "black")
           .attr("text-anchor", "middle")
           .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS + 5})`);
 
