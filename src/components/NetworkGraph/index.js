@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import throttle from "lodash.throttle";
 import { useCallback, useEffect, useRef } from "react";
-import { positionLink, getHeightWidth, getColors } from "./helpers";
+import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
 
 const CIRCLE_BASE_RADIUS = 15;
@@ -15,7 +15,6 @@ function NetworkGraph({ data }) {
   const links = root.links();
   const nodes = root.descendants();
 
-  const color = getColors(nodes);
   const buildSimulation = (link, node) => {
     d3.forceSimulation(nodes)
       .force(
@@ -71,7 +70,9 @@ function NetworkGraph({ data }) {
 
         g.append("circle")
           .attr("r", CIRCLE_BASE_RADIUS)
-          .style("fill", (d) => color(d.data.id));
+          .style("fill", (d) => {
+            return d.data.color || d.parent.data.color;
+          });
 
         g.append("text")
           .text((d) => d.data.id)

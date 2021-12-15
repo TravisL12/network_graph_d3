@@ -15,6 +15,3 @@ export const getHeightWidth = () => {
   const height = g.clientHeight;
   return { width, height };
 };
-
-export const getColors = (data) =>
-  d3.scaleOrdinal(d3.schemeCategory10).domain(data.map((node) => node.data.id));
