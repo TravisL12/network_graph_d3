@@ -11,16 +11,14 @@ const getColor = () => {
   return colors[idx];
 };
 
-const buildParentNode = (id, count) => {
-  const num = count || randomizer(6, 1);
-  return { id, children: buildNode(num), color: getColor() };
-};
-
 const buildNode = (num) => {
   const children = [];
   for (let i = 0; i < num; i++) {
     const id = randomizer(1000, 1);
-    const child = id > 850 ? buildParentNode(id) : { id, value: id };
+    const child =
+      id > 850
+        ? { id, children: buildNode(randomizer(6, 1)), color: getColor() }
+        : { id, value: id };
     children.push(child);
   }
   return children;
@@ -28,6 +26,5 @@ const buildNode = (num) => {
 
 export const buildHiearchy = () => {
   const count = randomizer(10, 5);
-  const data = buildParentNode("gyan", count);
-  return data;
+  return { id: "gyan", children: buildNode(count), color: "magenta" };
 };
