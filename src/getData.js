@@ -11,7 +11,7 @@ const getColor = () => {
   return colors[idx];
 };
 
-const buildNode = (num) => {
+export const buildNode = (num) => {
   const children = [];
   for (let i = 0; i < num; i++) {
     const id = randomizer(1000, 1);

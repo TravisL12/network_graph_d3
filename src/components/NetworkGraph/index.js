@@ -45,7 +45,8 @@ function NetworkGraph({ data }) {
   const buildSimulation = useCallback(() => {
     const { link, node } = getNodes();
 
-    d3.forceSimulation(nodes)
+    return d3
+      .forceSimulation(nodes)
       .force(
         "link",
         d3
@@ -81,7 +82,7 @@ function NetworkGraph({ data }) {
     svg
       .selectAll(".lines")
       .selectAll("path")
-      .data(links)
+      .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
       .join("path")
       .attr("stroke", "white")
       .style("stroke-width", "1px")
@@ -90,7 +91,7 @@ function NetworkGraph({ data }) {
     svg
       .selectAll(".nodes")
       .selectAll(".circle")
-      .data(nodes)
+      .data(nodes, (d) => d.index)
       .join((enter) => {
         const g = enter.append("g").attr("class", "circle");
 
@@ -107,7 +108,7 @@ function NetworkGraph({ data }) {
           .attr("fill", "white")
           .attr("text-anchor", "middle")
           .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS + 10})`);
-
+        console.log(g, "g?????");
         return g;
       });
 
@@ -140,9 +141,11 @@ function NetworkGraph({ data }) {
     updateViewportDimensions();
 
     window.addEventListener("resize", throttledResize);
-  }, [getNodes, updateViewportDimensions, throttledResize]);
+  }, []);
 
-  useEffect(() => draw(), [draw]);
+  useEffect(() => {
+    draw();
+  }, [draw]);
 
   return (
     <StyledSVGContainer>
