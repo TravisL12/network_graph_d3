@@ -1,5 +1,5 @@
 import NetworkGraph from "../NetworkGraph";
-import { buildNetworkData } from "../../getData";
+import { buildNetworkData, buildHiearchy } from "../../getData";
 import {
   SAppContainer,
   StyledAppInner,
@@ -11,7 +11,7 @@ import {
 const App = () => {
   return (
     <SAppContainer>
-      <NetworkGraph data={buildNetworkData()} />
+      <NetworkGraph data={buildHiearchy()} />
       <StyledAppInner>
         <SHeader />
         <div>

@@ -17,4 +17,4 @@ export const getHeightWidth = () => {
 };
 
 export const getColors = (data) =>
-  d3.scaleOrdinal(d3.schemeCategory10).domain(data.nodes.map(({ id }) => id));
+  d3.scaleOrdinal(d3.schemeCategory10).domain(data.map((node) => node.data.id));

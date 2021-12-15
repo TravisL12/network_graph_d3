@@ -6,23 +6,26 @@ import { StyledSVGContainer } from "../../styles";
 
 const CIRCLE_BASE_RADIUS = 15;
 const ARM_STRENGTH = -250;
+let transform = d3.zoomIdentity;
 
 function NetworkGraph({ data }) {
   const graphRef = useRef();
-  const color = getColors(data);
 
+  const root = d3.hierarchy(data);
+  const links = root.links();
+  const nodes = root.descendants();
+
+  const color = getColors(nodes);
   const buildSimulation = (link, node) => {
-    const { width, height } = getHeightWidth();
-    d3.forceSimulation(data.nodes)
+    d3.forceSimulation(nodes)
       .force(
         "link",
         d3
           .forceLink()
           .id(({ id }) => id)
-          .links(data.links)
+          .links(links)
       )
       .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
-      .force("center", d3.forceCenter(width * (3 / 5), height / 2))
       .on("tick", () => ticked(link, node));
   };
 
@@ -48,11 +51,12 @@ function NetworkGraph({ data }) {
 
   const draw = useCallback(() => {
     const svg = d3.select(graphRef.current);
+    const zoomRect = svg.select(".zoom-rect");
 
     const link = svg
       .selectAll(".lines")
       .selectAll("path")
-      .data(data.links)
+      .data(links)
       .join("path")
       .attr("stroke", "white")
       .style("stroke-width", "1px")
@@ -61,18 +65,18 @@ function NetworkGraph({ data }) {
     const node = svg
       .selectAll(".nodes")
       .selectAll("circle")
-      .data(data.nodes)
+      .data(nodes)
       .join((enter) => {
         const g = enter.append("g");
 
         g.append("circle")
           .attr("r", CIRCLE_BASE_RADIUS)
-          .style("fill", (d) => color(d.id));
+          .style("fill", (d) => color(d.data.id));
 
         g.append("text")
-          .text((d) => d.id)
+          .text((d) => d.data.id)
           .join("text")
-          .style("font-size", "12px")
+          .style("font-size", `12px`)
           .attr("fill", "white")
           .attr("text-anchor", "middle")
           .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS + 10})`);
@@ -81,25 +85,44 @@ function NetworkGraph({ data }) {
       });
 
     buildSimulation(link, node);
-  }, [data.links, data.nodes]);
 
-  const updateWindow = useCallback(() => {
+    const zoomed = (event) => {
+      transform = event.transform;
+      node.attr("transform", event.transform);
+      link.attr("transform", event.transform);
+
+      // maintain text size as you zoom in
+      const fontScaled = 12 / transform.k;
+      node.selectAll("text").style("font-size", `${fontScaled}px`);
+    };
+
+    const zoom = d3.zoom().scaleExtent([0.5, 12]).on("zoom", zoomed);
+    zoomRect.call(zoom).call(zoom.translateTo, 0, 0);
+  }, [links, nodes]);
+
+  const updateViewportDimensions = useCallback(() => {
     const svg = d3.select(graphRef.current);
     const { width, height } = getHeightWidth();
 
     svg.attr("width", width).attr("height", height);
+    svg.select(".zoom-rect").attr("width", width).attr("height", height);
   }, []);
 
-  const throttledResize = throttle(updateWindow, 100);
+  const throttledResize = throttle(updateViewportDimensions, 100);
 
   useEffect(() => {
     const svg = d3.select(graphRef.current);
-    const main = svg.append("g").attr("class", "main");
+    svg
+      .append("rect")
+      .attr("class", "zoom-rect")
+      .style("fill", "none")
+      .style("pointer-events", "all");
 
+    const main = svg.append("g").attr("class", "main");
     main.append("g").attr("class", "lines");
     main.append("g").attr("class", "nodes");
 
-    updateWindow();
+    updateViewportDimensions();
 
     window.addEventListener("resize", throttledResize);
   }, []);
