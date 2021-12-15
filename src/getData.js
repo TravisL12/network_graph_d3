@@ -20,7 +20,7 @@ const buildNode = (num) => {
   const children = [];
   for (let i = 0; i < num; i++) {
     const id = randomizer(1000, 1);
-    const child = id > 800 ? buildParentNode(id) : { id, value: id };
+    const child = id > 850 ? buildParentNode(id) : { id, value: id };
     children.push(child);
   }
   return children;

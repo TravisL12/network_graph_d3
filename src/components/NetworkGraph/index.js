@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
 
-const CIRCLE_BASE_RADIUS = 15;
+const CIRCLE_BASE_RADIUS = 10;
 const ARM_STRENGTH = -250;
 let transform = d3.zoomIdentity;
 
@@ -15,18 +15,12 @@ function NetworkGraph({ data }) {
   const links = root.links();
   const nodes = root.descendants();
 
-  const buildSimulation = (link, node) => {
-    d3.forceSimulation(nodes)
-      .force(
-        "link",
-        d3
-          .forceLink()
-          .id(({ id }) => id)
-          .links(links)
-      )
-      .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
-      .on("tick", () => ticked(link, node));
-  };
+  const getNodes = useCallback(() => {
+    const svg = d3.select(graphRef.current);
+    const link = svg.selectAll(".lines").selectAll("path");
+    const node = svg.selectAll(".nodes").selectAll(".circle");
+    return { svg, link, node };
+  }, []);
 
   const ticked = (link, node) => {
     link
@@ -48,11 +42,43 @@ function NetworkGraph({ data }) {
       .attr("y", ({ y }) => y);
   };
 
-  const draw = useCallback(() => {
-    const svg = d3.select(graphRef.current);
+  const buildSimulation = useCallback(() => {
+    const { link, node } = getNodes();
+
+    d3.forceSimulation(nodes)
+      .force(
+        "link",
+        d3
+          .forceLink()
+          .id(({ id }) => id)
+          .links(links)
+      )
+      .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
+      .on("tick", () => ticked(link, node));
+  }, [getNodes, links, nodes]);
+
+  const enableZoom = useCallback(() => {
+    const { svg, link, node } = getNodes();
     const zoomRect = svg.select(".zoom-rect");
 
-    const link = svg
+    const zoomed = (event) => {
+      transform = event.transform;
+      node.attr("transform", event.transform);
+      link.attr("transform", event.transform);
+
+      // maintain text size as you zoom in
+      const fontScaled = 12 / transform.k;
+      node.selectAll("text").style("font-size", `${fontScaled}px`);
+    };
+
+    const zoom = d3.zoom().scaleExtent([0.5, 12]).on("zoom", zoomed);
+    zoomRect.call(zoom).call(zoom.translateTo, 0, 0);
+  }, [getNodes]);
+
+  const draw = useCallback(() => {
+    const { svg } = getNodes();
+
+    svg
       .selectAll(".lines")
       .selectAll("path")
       .data(links)
@@ -61,12 +87,12 @@ function NetworkGraph({ data }) {
       .style("stroke-width", "1px")
       .style("fill", "none");
 
-    const node = svg
+    svg
       .selectAll(".nodes")
-      .selectAll("circle")
+      .selectAll(".circle")
       .data(nodes)
       .join((enter) => {
-        const g = enter.append("g");
+        const g = enter.append("g").attr("class", "circle");
 
         g.append("circle")
           .attr("r", CIRCLE_BASE_RADIUS)
@@ -85,34 +111,22 @@ function NetworkGraph({ data }) {
         return g;
       });
 
-    buildSimulation(link, node);
-
-    const zoomed = (event) => {
-      transform = event.transform;
-      node.attr("transform", event.transform);
-      link.attr("transform", event.transform);
-
-      // maintain text size as you zoom in
-      const fontScaled = 12 / transform.k;
-      node.selectAll("text").style("font-size", `${fontScaled}px`);
-    };
-
-    const zoom = d3.zoom().scaleExtent([0.5, 12]).on("zoom", zoomed);
-    zoomRect.call(zoom).call(zoom.translateTo, 0, 0);
-  }, [links, nodes]);
+    buildSimulation();
+    enableZoom();
+  }, [links, nodes, buildSimulation, enableZoom, getNodes]);
 
   const updateViewportDimensions = useCallback(() => {
-    const svg = d3.select(graphRef.current);
+    const { svg } = getNodes();
     const { width, height } = getHeightWidth();
 
     svg.attr("width", width).attr("height", height);
     svg.select(".zoom-rect").attr("width", width).attr("height", height);
-  }, []);
+  }, [getNodes]);
 
   const throttledResize = throttle(updateViewportDimensions, 100);
 
   useEffect(() => {
-    const svg = d3.select(graphRef.current);
+    const { svg } = getNodes();
     svg
       .append("rect")
       .attr("class", "zoom-rect")
@@ -126,7 +140,7 @@ function NetworkGraph({ data }) {
     updateViewportDimensions();
 
     window.addEventListener("resize", throttledResize);
-  }, []);
+  }, [getNodes, updateViewportDimensions, throttledResize]);
 
   useEffect(() => draw(), [draw]);
 

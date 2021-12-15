@@ -1,5 +1,5 @@
 import NetworkGraph from "../NetworkGraph";
-import { buildNetworkData, buildHiearchy } from "../../getData";
+import { buildHiearchy } from "../../getData";
 import {
   SAppContainer,
   StyledAppInner,

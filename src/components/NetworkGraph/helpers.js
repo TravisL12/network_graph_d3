@@ -1,5 +1,3 @@
-import * as d3 from "d3";
-
 // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
 export const positionLink = (d) => {
   const dx = d.target.x - d.source.x;
