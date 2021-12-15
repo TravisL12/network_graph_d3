@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
 
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 12;
 const CIRCLE_BASE_RADIUS = 10;
 const ARM_STRENGTH = -250;
 let transform = d3.zoomIdentity;
@@ -17,9 +19,10 @@ function NetworkGraph({ data }) {
 
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
+    const zoomRect = svg.select(".zoom-rect");
     const link = svg.selectAll(".lines").selectAll("path");
     const node = svg.selectAll(".nodes").selectAll(".circle");
-    return { svg, link, node };
+    return { svg, link, node, zoomRect };
   }, []);
 
   const ticked = (link, node) => {
@@ -59,20 +62,27 @@ function NetworkGraph({ data }) {
   }, [getNodes, links, nodes]);
 
   const enableZoom = useCallback(() => {
-    const { svg, link, node } = getNodes();
-    const zoomRect = svg.select(".zoom-rect");
+    const { link, node, zoomRect } = getNodes();
 
     const zoomed = (event) => {
       transform = event.transform;
       node.attr("transform", event.transform);
       link.attr("transform", event.transform);
 
-      // maintain text size as you zoom in
-      const fontScaled = 12 / transform.k;
-      node.selectAll("text").style("font-size", `${fontScaled}px`);
+      if (transform.k < 0.6) {
+        node.selectAll("text").style("display", "none");
+      } else {
+        // maintain text size as you zoom in
+        const fontSize = transform.k < 1.1 ? 14 : 16;
+        const fontScaled = fontSize / transform.k;
+        node
+          .selectAll("text")
+          .style("font-size", `${fontScaled}px`)
+          .style("display", "block");
+      }
     };
 
-    const zoom = d3.zoom().scaleExtent([0.5, 12]).on("zoom", zoomed);
+    const zoom = d3.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]).on("zoom", zoomed);
     zoomRect.call(zoom).call(zoom.translateTo, 0, 0);
   }, [getNodes]);
 
@@ -97,9 +107,12 @@ function NetworkGraph({ data }) {
 
         g.append("circle")
           .attr("r", CIRCLE_BASE_RADIUS)
-          .style("fill", (d) => {
-            return d.data.color || d.parent.data.color;
-          });
+          .style("fill", "red")
+          .call((e) =>
+            e
+              .transition()
+              .style("fill", (d) => d.data.color || d.parent.data.color)
+          );
 
         g.append("text")
           .text((d) => d.data.id)
@@ -107,8 +120,8 @@ function NetworkGraph({ data }) {
           .style("font-size", `12px`)
           .attr("fill", "white")
           .attr("text-anchor", "middle")
-          .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS + 10})`);
-        console.log(g, "g?????");
+          .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS + 5})`);
+
         return g;
       });
 
@@ -117,11 +130,11 @@ function NetworkGraph({ data }) {
   }, [links, nodes, buildSimulation, enableZoom, getNodes]);
 
   const updateViewportDimensions = useCallback(() => {
-    const { svg } = getNodes();
+    const { svg, zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
 
     svg.attr("width", width).attr("height", height);
-    svg.select(".zoom-rect").attr("width", width).attr("height", height);
+    zoomRect.attr("width", width).attr("height", height);
   }, [getNodes]);
 
   const throttledResize = throttle(updateViewportDimensions, 100);
