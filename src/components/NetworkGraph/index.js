@@ -1,42 +1,30 @@
 import * as d3 from "d3";
 import throttle from "lodash.throttle";
 import { useCallback, useEffect, useRef } from "react";
-import styled from "styled-components";
+import { positionLink, getHeightWidth, getColors } from "./helpers";
+import { StyledSVGContainer } from "../../styles";
 
-const StyledSVGContainer = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  vertical-align: top;
-  overflow: hidden;
-`;
-
-const CIRCLE_BASE_RADIUS = 20;
-
-// https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
-function positionLink(d) {
-  const dx = d.target.x - d.source.x;
-  const dy = d.target.y - d.source.y;
-  const curveRate = 1; // smaller curve rate makes curvier lines
-  const dr = Math.sqrt(dx * dx + dy * dy) * curveRate;
-  return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
-}
-
-const getHeightWidth = () => {
-  const g = document.body;
-  const width = g.clientWidth;
-  const height = g.clientHeight;
-  return { width, height };
-};
+const CIRCLE_BASE_RADIUS = 15;
+const ARM_STRENGTH = -250;
 
 function NetworkGraph({ data }) {
   const graphRef = useRef();
+  const color = getColors(data);
 
-  const color = d3
-    .scaleOrdinal(d3.schemeCategory10)
-    .domain(data.nodes.map(({ id }) => id));
+  const buildSimulation = (link, node) => {
+    const { width, height } = getHeightWidth();
+    d3.forceSimulation(data.nodes)
+      .force(
+        "link",
+        d3
+          .forceLink()
+          .id(({ id }) => id)
+          .links(data.links)
+      )
+      .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
+      .force("center", d3.forceCenter(width * (3 / 5), height / 2))
+      .on("tick", () => ticked(link, node));
+  };
 
   const ticked = (link, node) => {
     link
@@ -46,14 +34,15 @@ function NetworkGraph({ data }) {
       .attr("y2", ({ target }) => target.y)
       .attr("d", positionLink);
 
+    const nodePosition = CIRCLE_BASE_RADIUS / 4;
     node
       .selectAll("circle")
-      .attr("cx", ({ x }) => x + 6)
-      .attr("cy", ({ y }) => y - 6);
+      .attr("cx", ({ x }) => x + nodePosition)
+      .attr("cy", ({ y }) => y - nodePosition);
 
     node
       .selectAll("text")
-      .attr("x", ({ x }) => x + 6)
+      .attr("x", ({ x }) => x + nodePosition)
       .attr("y", ({ y }) => y);
   };
 
@@ -91,18 +80,7 @@ function NetworkGraph({ data }) {
         return g;
       });
 
-    const { width, height } = getHeightWidth();
-    d3.forceSimulation(data.nodes)
-      .force(
-        "link",
-        d3
-          .forceLink()
-          .id(({ id }) => id)
-          .links(data.links)
-      )
-      .force("charge", d3.forceManyBody().strength(-1000))
-      .force("center", d3.forceCenter(width * (3 / 5), height / 2))
-      .on("tick", () => ticked(link, node));
+    buildSimulation(link, node);
   }, [data.links, data.nodes]);
 
   const updateWindow = useCallback(() => {
