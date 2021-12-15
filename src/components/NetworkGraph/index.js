@@ -60,23 +60,6 @@ function NetworkGraph({ data }) {
   const draw = useCallback(() => {
     const svg = d3.select(graphRef.current);
 
-    const dragstarted = (event) => {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.fx = event.x;
-      event.fy = event.y;
-    };
-
-    const dragged = (event) => {
-      event.fx = event.x;
-      event.fy = event.y;
-    };
-
-    const dragended = (event) => {
-      if (!event.active) simulation.alphaTarget(0);
-      event.fx = null;
-      event.fy = null;
-    };
-
     const link = svg
       .selectAll(".lines")
       .selectAll("path")
@@ -102,14 +85,6 @@ function NetworkGraph({ data }) {
           .join("text")
           .style("font-size", "12px")
           .attr("text-anchor", "middle");
-
-        g.call(
-          d3
-            .drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended)
-        );
 
         return g;
       });
