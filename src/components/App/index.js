@@ -1,4 +1,4 @@
-import TreeGraph from "../TreeGraph";
+import NetworkGraph from "../NetworkGraph";
 import { buildHiearchy, buildNode } from "../../getData";
 import {
   SAppContainer,
@@ -21,7 +21,7 @@ const App = () => {
 
   return (
     <SAppContainer>
-      <TreeGraph data={data} />
+      <NetworkGraph data={data} />
       <StyledAppInner>
         <SHeader />
         <div>
