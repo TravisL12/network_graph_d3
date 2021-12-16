@@ -5,6 +5,7 @@ const gyanColors = {
   tealGradient2: "#194451",
   darkBlueGray: "#1d4250",
   otherTealGradient: "#06515a",
+  header: "#FCFCFC",
 };
 
 export const SAppContainer = styled.div`
@@ -33,11 +34,9 @@ export const SHeader = styled.div`
   grid-area: header;
   height: 50px;
   width: 100%;
-  background: linear-gradient(
-    90deg,
-    ${gyanColors.tealGradient1} 0%,
-    ${gyanColors.tealGradient2} 100%
-  );
+  mix-blend-mode: normal;
+
+  background: ${gyanColors.header};
 `;
 
 export const SSidebarContainer = styled.div`

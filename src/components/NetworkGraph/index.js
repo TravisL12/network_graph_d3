@@ -69,6 +69,7 @@ function NetworkGraph({ data }) {
       node.attr("transform", event.transform);
       link.attr("transform", event.transform);
 
+      // hide text when zoomed way out
       if (transform.k < 0.6) {
         node.selectAll("text").style("display", "none");
       } else {
@@ -119,8 +120,7 @@ function NetworkGraph({ data }) {
           .join("text")
           .style("font-size", `12px`)
           .attr("fill", "black")
-          .attr("text-anchor", "middle")
-          .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS + 5})`);
+          .attr("transform", `translate(${CIRCLE_BASE_RADIUS + 5},3)`);
 
         return g;
       });
