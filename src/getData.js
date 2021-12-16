@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 
-function randomizer(max = 1, min = 0) {
+export function randomizer(max = 1, min = 0) {
   return Math.round(Math.random() * (max - min) + min);
 }
 

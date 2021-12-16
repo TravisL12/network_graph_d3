@@ -33,15 +33,14 @@ function NetworkGraph({ data }) {
       .attr("y2", ({ target }) => target.y)
       .attr("d", positionLink);
 
-    const nodePosition = CIRCLE_BASE_RADIUS / 4;
     node
       .selectAll("circle")
-      .attr("cx", ({ x }) => x + nodePosition)
-      .attr("cy", ({ y }) => y - nodePosition);
+      .attr("cx", ({ x }) => x)
+      .attr("cy", ({ y }) => y);
 
     node
       .selectAll("text")
-      .attr("x", ({ x }) => x + nodePosition)
+      .attr("x", ({ x }) => x)
       .attr("y", ({ y }) => y);
   };
 
@@ -58,6 +57,7 @@ function NetworkGraph({ data }) {
           .links(links)
       )
       .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
+      .tick(500)
       .on("tick", () => ticked(link, node));
   }, [getNodes, links, nodes]);
 
@@ -71,13 +71,14 @@ function NetworkGraph({ data }) {
 
       // hide text when zoomed way out
       if (transform.k < 0.6) {
-        node.selectAll("text").style("display", "none");
+        node.selectAll("text.child-node").style("display", "none");
+        node.selectAll("text.parent-node").style("font-size", "36px");
       } else {
         // maintain text size as you zoom in
         const fontSize = transform.k < 1.1 ? 14 : 16;
         const fontScaled = fontSize / transform.k;
         node
-          .selectAll("text")
+          .selectAll("text.node-text")
           .style("font-size", `${fontScaled}px`)
           .style("display", "block");
       }
@@ -118,9 +119,13 @@ function NetworkGraph({ data }) {
         g.append("text")
           .text((d) => d.data.id)
           .join("text")
+          .attr("class", (d) =>
+            d.children ? "node-text parent-node" : "node-text child-node"
+          )
           .style("font-size", `12px`)
           .attr("fill", "black")
-          .attr("transform", `translate(${CIRCLE_BASE_RADIUS + 5},3)`);
+          .style("text-anchor", "middle")
+          .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
 
         return g;
       });
