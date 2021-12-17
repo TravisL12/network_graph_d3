@@ -6,7 +6,7 @@ import { StyledSVGContainer } from "../../styles";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
-const CIRCLE_BASE_RADIUS = 10;
+const CIRCLE_BASE_RADIUS = 5;
 const ARM_STRENGTH = -250;
 let transform = d3.zoomIdentity;
 
@@ -75,7 +75,7 @@ function NetworkGraph({ data }) {
       link.attr("transform", event.transform);
 
       // hide text when zoomed way out
-      if (transform.k < 0.8) {
+      if (transform.k < 0.85) {
         node.selectAll("text.child-node").style("display", "none");
         node.selectAll("text.parent-node").style("font-size", "36px");
       } else {
@@ -102,7 +102,7 @@ function NetworkGraph({ data }) {
       .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
       .join("path")
       .attr("stroke", "#177E89")
-      .style("stroke-width", "1px")
+      .style("stroke-width", "0.1px")
       .style("fill", "none");
 
     svg
@@ -113,12 +113,12 @@ function NetworkGraph({ data }) {
         const g = enter.append("g").attr("class", "circle");
 
         g.append("circle")
-          .attr("r", CIRCLE_BASE_RADIUS)
-          .style("fill", "red")
-          .call((e) =>
-            e
-              .transition()
-              .style("fill", (d) => d.data.color || d.parent.data.color)
+          .attr("r", (d) =>
+            d.children ? CIRCLE_BASE_RADIUS : CIRCLE_BASE_RADIUS * (4 / 6)
+          )
+          .style(
+            "fill",
+            (d) => d.data.color || d3.color(d.parent.data.color).brighter(1.6)
           );
 
         // g.append("text")
