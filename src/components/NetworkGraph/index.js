@@ -42,6 +42,11 @@ function NetworkGraph({ data }) {
       .selectAll("text")
       .attr("x", ({ x }) => x)
       .attr("y", ({ y }) => y);
+
+    node
+      .selectAll("rect")
+      .attr("x", ({ x }) => x)
+      .attr("y", ({ y }) => y);
   };
 
   const buildSimulation = useCallback(() => {
@@ -69,18 +74,11 @@ function NetworkGraph({ data }) {
       node.attr("transform", event.transform);
       link.attr("transform", event.transform);
 
-      // hide text when zoomed way out
-      if (transform.k < 0.85) {
-        node.selectAll("text.child-node").style("display", "none");
-        node.selectAll("text.parent-node").style("font-size", "36px");
+      // // hide text when zoomed way out
+      if (transform.k < 1.2) {
+        node.selectAll(".child-node").style("display", "none");
       } else {
-        // maintain text size as you zoom in
-        const fontSize = transform.k < 1.1 ? 14 : 16;
-        const fontScaled = fontSize / transform.k;
-        node
-          .selectAll("text.node-text")
-          .style("font-size", `${fontScaled}px`)
-          .style("display", "block");
+        node.selectAll(".node-text").style("display", "block");
       }
     };
 
@@ -116,13 +114,43 @@ function NetworkGraph({ data }) {
             (d) => d.data.color || d3.color(d.parent.data.color).brighter(1.6)
           );
 
-        g.append("text")
-          .text((d) => d.data.id)
-          .join("text")
+        const gText = g
+          .append("g")
           .attr("class", (d) =>
             d.children ? "node-text parent-node" : "node-text child-node"
-          )
-          .style("font-size", `12px`)
+          );
+
+        gText
+          .append("text")
+          .text((d) => d.data.id)
+          .join("text")
+          .style("font-size", (d) => (d.children ? "16px" : "12px"))
+          .each(function (d) {
+            d.bbox = this.getBBox();
+          });
+
+        gText.selectAll("text").remove();
+
+        const xMargin = 2;
+        const yMargin = 0;
+        gText
+          .append("rect")
+          .style("fill", "white")
+          .style("opacity", 0.75)
+          .attr("width", (d) => d.bbox.width + 2 * xMargin)
+          .attr("height", (d) => d.bbox.height + 2 * yMargin)
+          .attr("rx", "5")
+          .attr("transform", function (d) {
+            return `translate(-${
+              (d.bbox.width + xMargin) / 2
+            }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + yMargin})`;
+          });
+
+        gText
+          .append("text")
+          .text((d) => d.data.id)
+          .join("text")
+          .style("font-size", (d) => (d.children ? "16px" : "12px"))
           .attr("fill", "black")
           .style("text-anchor", "middle")
           .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
