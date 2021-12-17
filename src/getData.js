@@ -26,5 +26,5 @@ export const buildNode = (num) => {
 
 export const buildHiearchy = () => {
   const count = randomizer(10, 5);
-  return { id: "gyan", children: buildNode(count), color: "magenta" };
+  return { id: "Gyan", children: buildNode(count), color: "magenta" };
 };

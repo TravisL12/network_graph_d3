@@ -38,10 +38,10 @@ const App = () => {
             <SSidebarInner>
               <button onClick={addNodes}>Add Nodes</button>
               <ul>
-                <li>All the things</li>
-                <li>All the things</li>
-                <li>All the things</li>
-                <li>All the things</li>
+                <li>Search Result 1</li>
+                <li>Search Result 2</li>
+                <li>Search Result 3</li>
+                <li>Search Result 4</li>
               </ul>
             </SSidebarInner>
           </SSidebarContainer>

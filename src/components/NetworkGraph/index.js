@@ -42,6 +42,11 @@ function NetworkGraph({ data }) {
       .selectAll("text")
       .attr("x", ({ x }) => x)
       .attr("y", ({ y }) => y);
+
+    node
+      .selectAll("rect")
+      .attr("x", ({ x }) => x)
+      .attr("y", ({ y }) => y);
   };
 
   const buildSimulation = useCallback(() => {
@@ -70,7 +75,7 @@ function NetworkGraph({ data }) {
       link.attr("transform", event.transform);
 
       // hide text when zoomed way out
-      if (transform.k < 0.6) {
+      if (transform.k < 0.8) {
         node.selectAll("text.child-node").style("display", "none");
         node.selectAll("text.parent-node").style("font-size", "36px");
       } else {
@@ -116,13 +121,38 @@ function NetworkGraph({ data }) {
               .style("fill", (d) => d.data.color || d.parent.data.color)
           );
 
+        // g.append("text")
+        //   .text((d) => d.data.id)
+        //   .join("text")
+        //   .style("font-size", (d) => (d.children ? "16px" : "12px"))
+        //   .each(function (d) {
+        //     d.bbox = this.getBBox();
+        //   });
+
+        // g.selectAll("text").remove();
+
+        // const xMargin = 4;
+        // const yMargin = 2;
+        // g.append("rect")
+        //   .attr("class", (d) =>
+        //     d.children ? "node-text parent-node" : "node-text child-node"
+        //   )
+        //   .style("fill", "white")
+        //   .attr("width", (d) => d.bbox.width + 2 * xMargin)
+        //   .attr("height", (d) => d.bbox.height + 2 * yMargin)
+        //   .attr("transform", function (d) {
+        //     return `translate(-${
+        //       d.bbox.width / 2
+        //     }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + yMargin})`;
+        //   });
+
         g.append("text")
           .text((d) => d.data.id)
           .join("text")
           .attr("class", (d) =>
             d.children ? "node-text parent-node" : "node-text child-node"
           )
-          .style("font-size", `12px`)
+          .style("font-size", (d) => (d.children ? "16px" : "12px"))
           .attr("fill", "black")
           .style("text-anchor", "middle")
           .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
