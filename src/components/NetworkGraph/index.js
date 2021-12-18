@@ -75,7 +75,7 @@ function NetworkGraph({ data }) {
       link.attr("transform", event.transform);
 
       // // hide text when zoomed way out
-      if (transform.k < 1.2) {
+      if (transform.k < 0.9) {
         node.selectAll(".child-node").style("display", "none");
       } else {
         node.selectAll(".node-text").style("display", "block");
@@ -95,7 +95,7 @@ function NetworkGraph({ data }) {
       .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
       .join("path")
       .attr("stroke", "#177E89")
-      .style("stroke-width", "0.1px")
+      .style("stroke-width", "0.2px")
       .style("fill", "none");
 
     svg

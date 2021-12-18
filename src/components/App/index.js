@@ -13,7 +13,7 @@ const App = () => {
   const [data, setData] = useState(buildHiearchy());
 
   const addNodes = () => {
-    const nodes = buildNode(3);
+    const nodes = buildNode(3, false, 1);
     let children = JSON.parse(JSON.stringify(data.children));
     const childIdxs = children.reduce((acc, c, idx) => {
       if (c.children) acc.push(idx);
@@ -37,12 +37,23 @@ const App = () => {
           <SSidebarContainer>
             <SSidebarInner>
               <button onClick={addNodes}>Add Nodes</button>
-              <ul>
-                <li>Search Result 1</li>
-                <li>Search Result 2</li>
-                <li>Search Result 3</li>
-                <li>Search Result 4</li>
-              </ul>
+              <h3>{data.id}</h3>
+              {data.children.map((child) => {
+                return (
+                  <ul key={`parent-${child.id}`}>
+                    <li style={{ background: child.color }}>ID: {child.id}</li>
+                    {child.children && (
+                      <ul>
+                        {child.children.map((child2) => {
+                          return (
+                            <li key={`child-${child2.id}`}>ID: {child2.id}</li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </ul>
+                );
+              })}
             </SSidebarInner>
           </SSidebarContainer>
         </div>
