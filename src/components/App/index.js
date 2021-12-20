@@ -1,5 +1,10 @@
 import NetworkGraph from "../NetworkGraph";
-import { buildHiearchy, buildNode, randomizer } from "../../getData";
+import {
+  buildGyanStratify,
+  buildGyanData,
+  buildNode,
+  randomizer,
+} from "../../getData";
 import {
   SAppContainer,
   StyledAppInner,
@@ -7,26 +12,27 @@ import {
   SSidebarContainer,
   SSidebarInner,
 } from "../../styles";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const App = () => {
-  const [data, setData] = useState(buildHiearchy());
+  const [data, setData] = useState();
 
-  const addNodes = () => {
-    const nodes = buildNode(3, false, 1);
-    let children = JSON.parse(JSON.stringify(data.children));
-    const childIdxs = children.reduce((acc, c, idx) => {
-      if (c.children) acc.push(idx);
-      return acc;
-    }, []);
-    if (childIdxs.length > 0) {
-      const idx = childIdxs[randomizer(childIdxs.length - 1)];
-      children[idx].children = children[idx].children.concat(nodes);
-    } else {
-      children = children.concat(nodes);
-    }
-    setData({ ...data, children });
+  const fetchData = () => {
+    fetch(`${process.env.PUBLIC_URL}/data/planets.json`)
+      .then((d) => d.json())
+      .then((values) => {
+        const d = buildGyanStratify(values);
+        setData(d);
+      });
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (!data) return "fetching";
+
+  console.log(data);
 
   return (
     <SAppContainer>
@@ -36,24 +42,26 @@ const App = () => {
         <div>
           <SSidebarContainer>
             <SSidebarInner>
-              <button onClick={addNodes}>Add Nodes</button>
-              <h3>{data.id}</h3>
-              {data.children.map((child) => {
+              <h3>hi</h3>
+              {/* <button onClick={addNodes}>Add Nodes</button> */}
+              {/* {data.children.map((child) => {
                 return (
-                  <ul key={`parent-${child.id}`}>
-                    <li style={{ background: child.color }}>ID: {child.id}</li>
+                  <ul key={`parent-${child.parent_id}`}>
+                    <li>ID: {child.id}</li>
                     {child.children && (
                       <ul>
                         {child.children.map((child2) => {
                           return (
-                            <li key={`child-${child2.id}`}>ID: {child2.id}</li>
+                            <li key={`child-${child2.child_id}`}>
+                              ID: {child2.child_id}
+                            </li>
                           );
                         })}
                       </ul>
                     )}
                   </ul>
                 );
-              })}
+              })} */}
             </SSidebarInner>
           </SSidebarContainer>
         </div>

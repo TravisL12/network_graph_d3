@@ -13,9 +13,10 @@ let transform = d3.zoomIdentity;
 function NetworkGraph({ data }) {
   const graphRef = useRef();
 
-  const root = d3.hierarchy(data);
-  const links = root.links();
-  const nodes = root.descendants();
+  const links = data.links;
+  const nodes = Object.values(data.nodes);
+  // const links = data.links();
+  // const nodes = data.descendants();
 
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
@@ -92,10 +93,10 @@ function NetworkGraph({ data }) {
     svg
       .selectAll(".lines")
       .selectAll("path")
-      .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
+      .data(links, (d) => `${d.source.parent_id}-${d.target.child_id}`)
       .join("path")
-      .attr("stroke", "#177E89")
-      .style("stroke-width", "0.2px")
+      .attr("stroke", "black")
+      .style("stroke-width", "2px")
       .style("fill", "none");
 
     svg
@@ -105,14 +106,9 @@ function NetworkGraph({ data }) {
       .join((enter) => {
         const g = enter.append("g").attr("class", "circle");
 
-        g.append("circle")
-          .attr("r", (d) =>
-            d.children ? CIRCLE_BASE_RADIUS : CIRCLE_BASE_RADIUS * (4 / 6)
-          )
-          .style(
-            "fill",
-            (d) => d.data.color || d3.color(d.parent.data.color).brighter(1.6)
-          );
+        g.append("circle").attr("r", (d) =>
+          d.children ? CIRCLE_BASE_RADIUS : CIRCLE_BASE_RADIUS * (4 / 6)
+        );
 
         const gText = g
           .append("g")
@@ -122,7 +118,7 @@ function NetworkGraph({ data }) {
 
         gText
           .append("text")
-          .text((d) => d.data.id)
+          .text((d) => `${d.parent_name}-${d.child_name}`)
           .join("text")
           .style("font-size", (d) => (d.children ? "16px" : "12px"))
           .each(function (d) {
@@ -148,7 +144,7 @@ function NetworkGraph({ data }) {
 
         gText
           .append("text")
-          .text((d) => d.data.id)
+          .text((d) => `${d.parent_name}-${d.child_name}`)
           .join("text")
           .style("font-size", (d) => (d.children ? "16px" : "12px"))
           .attr("fill", "black")
