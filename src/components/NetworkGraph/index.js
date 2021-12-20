@@ -62,7 +62,10 @@ function NetworkGraph({ data }) {
           .id(({ id }) => id)
           .links(links)
       )
-      .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
+      .force(
+        "charge",
+        d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(100)
+      )
       .tick(500)
       .on("tick", () => ticked(link, node));
   }, [getNodes, links, nodes]);
@@ -75,7 +78,7 @@ function NetworkGraph({ data }) {
       node.attr("transform", event.transform);
       link.attr("transform", event.transform);
 
-      // // hide text when zoomed way out
+      // hide text when zoomed way out
       if (transform.k < 0.9) {
         node.selectAll(".child-node").style("display", "none");
       } else {
@@ -96,7 +99,7 @@ function NetworkGraph({ data }) {
       .data(links, (d) => `${d.source.parent_id}-${d.target.child_id}`)
       .join("path")
       .attr("stroke", "black")
-      .style("stroke-width", "2px")
+      .style("stroke-width", "0.5px")
       .style("fill", "none");
 
     svg
@@ -127,19 +130,19 @@ function NetworkGraph({ data }) {
 
         gText.selectAll("text").remove();
 
-        const xMargin = 2;
-        const yMargin = 0;
+        const xTextMargin = 2;
+        const yTextMargin = 0;
         gText
           .append("rect")
           .style("fill", "white")
           .style("opacity", 0.75)
-          .attr("width", (d) => d.bbox.width + 2 * xMargin)
-          .attr("height", (d) => d.bbox.height + 2 * yMargin)
+          .attr("width", (d) => d.bbox.width + 2 * xTextMargin)
+          .attr("height", (d) => d.bbox.height + 2 * yTextMargin)
           .attr("rx", "5")
           .attr("transform", function (d) {
             return `translate(-${
-              (d.bbox.width + xMargin) / 2
-            }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + yMargin})`;
+              (d.bbox.width + xTextMargin) / 2
+            }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + yTextMargin})`;
           });
 
         gText

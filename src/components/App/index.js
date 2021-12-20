@@ -32,8 +32,6 @@ const App = () => {
 
   if (!data) return "fetching";
 
-  console.log(data);
-
   return (
     <SAppContainer>
       <NetworkGraph data={data} />
