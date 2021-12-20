@@ -1,3 +1,5 @@
+import { ForceGraph2D } from "react-force-graph";
+
 import NetworkGraph from "../NetworkGraph";
 import {
   buildGyanStratify,
@@ -18,7 +20,7 @@ const App = () => {
   const [data, setData] = useState();
 
   const fetchData = () => {
-    fetch(`${process.env.PUBLIC_URL}/data/planets.json`)
+    fetch(`${process.env.PUBLIC_URL}/data/robotics.json`)
       .then((d) => d.json())
       .then((values) => {
         const d = buildGyanStratify(values);
@@ -34,7 +36,9 @@ const App = () => {
 
   return (
     <SAppContainer>
-      <NetworkGraph data={data} />
+      <ForceGraph2D
+        graphData={{ nodes: Object.values(data.nodes), links: data.links }}
+      />
       <StyledAppInner>
         <SHeader />
         <div>
