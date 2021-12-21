@@ -54,6 +54,7 @@ export const SSidebarInner = styled.div`
   border-radius: 6px;
   background: rgba(171, 218, 220, 0.5);
   backdrop-filter: blur(60px);
+  overflow: auto;
 `;
 
 export const StyledSVGContainer = styled.div`

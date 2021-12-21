@@ -13,7 +13,7 @@ const App = () => {
   const [data, setData] = useState(buildHiearchy());
 
   const addNodes = () => {
-    const nodes = buildNode(3, false, 1);
+    const nodes = buildNode(3, true, 1);
     let children = JSON.parse(JSON.stringify(data.children));
     const childIdxs = children.reduce((acc, c, idx) => {
       if (c.children) acc.push(idx);
@@ -33,7 +33,7 @@ const App = () => {
       <NetworkGraph data={data} />
       <StyledAppInner>
         <SHeader />
-        <div>
+        <div style={{ overflow: "auto" }}>
           <SSidebarContainer>
             <SSidebarInner>
               <button onClick={addNodes}>Add Nodes</button>

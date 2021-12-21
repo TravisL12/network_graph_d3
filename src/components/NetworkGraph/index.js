@@ -8,6 +8,7 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
 const CIRCLE_BASE_RADIUS = 5;
 const ARM_STRENGTH = -250;
+const ARM_MAX_DISTANCE = 100;
 let transform = d3.zoomIdentity;
 
 function NetworkGraph({ data }) {
@@ -61,7 +62,10 @@ function NetworkGraph({ data }) {
           .id(({ id }) => id)
           .links(links)
       )
-      .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
+      .force(
+        "charge",
+        d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
+      )
       .tick(500)
       .on("tick", () => ticked(link, node));
   }, [getNodes, links, nodes]);
