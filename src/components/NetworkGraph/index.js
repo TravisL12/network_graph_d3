@@ -58,7 +58,6 @@ function NetworkGraph({ data }) {
 
     const simulation = d3.forceSimulation();
     simulation.restart();
-
     simulation
       .force(
         "link",
@@ -74,9 +73,17 @@ function NetworkGraph({ data }) {
         d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
       )
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(CIRCLE_BASE_RADIUS));
+      .force("collision", d3.forceCollide(CIRCLE_BASE_RADIUS));
 
-    simulation.alpha(0.1).on("tick", ticked);
+    simulation
+      .tick(5000)
+      .on("tick", ticked)
+      .on("end", () => {
+        simulation.nodes().map((node) => {
+          node.fx = node.x;
+          node.fy = node.y;
+        });
+      });
   }, [links, nodes, ticked]);
 
   const enableZoom = useCallback(() => {
