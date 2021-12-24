@@ -6,9 +6,9 @@ import { StyledSVGContainer } from "../../styles";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
-const CIRCLE_BASE_RADIUS = 5;
-const ARM_STRENGTH = -250;
-const ARM_MAX_DISTANCE = 100;
+const CIRCLE_BASE_RADIUS = 8;
+const ARM_STRENGTH = -500;
+const ARM_MAX_DISTANCE = 250;
 let transform = d3.zoomIdentity;
 
 function NetworkGraph({ data }) {
@@ -52,26 +52,32 @@ function NetworkGraph({ data }) {
 
   const buildSimulation = useCallback(() => {
     const { link, node } = getNodes();
+    const { width, height } = getHeightWidth();
 
     return d3
       .forceSimulation(nodes)
       .force(
         "link",
         d3
-          .forceLink()
+          .forceLink(links)
           .id(({ id }) => id)
-          .links(links)
+          .distance(50)
+          .strength(2)
       )
       .force(
         "charge",
         d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
       )
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("x", d3.forceX())
+      .force("y", d3.forceY())
       .tick(500)
       .on("tick", () => ticked(link, node));
   }, [getNodes, links, nodes]);
 
   const enableZoom = useCallback(() => {
     const { link, node, zoomRect } = getNodes();
+    const { width, height } = getHeightWidth();
 
     const zoomed = (event) => {
       transform = event.transform;
@@ -87,7 +93,7 @@ function NetworkGraph({ data }) {
     };
 
     const zoom = d3.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]).on("zoom", zoomed);
-    zoomRect.call(zoom).call(zoom.translateTo, 0, 0);
+    zoomRect.call(zoom).call(zoom.translateTo, width / 2, height / 2);
   }, [getNodes]);
 
   const draw = useCallback(() => {
