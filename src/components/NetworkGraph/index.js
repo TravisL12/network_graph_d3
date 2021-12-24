@@ -3,12 +3,14 @@ import throttle from "lodash.throttle";
 import { useCallback, useEffect, useRef } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
+import { update } from "lodash";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
 const CIRCLE_BASE_RADIUS = 8;
 const ARM_STRENGTH = -500;
 const ARM_MAX_DISTANCE = 250;
+const TICKS = 500;
 let transform = d3.zoomIdentity;
 
 function NetworkGraph({ data }) {
@@ -21,12 +23,13 @@ function NetworkGraph({ data }) {
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
     const zoomRect = svg.select(".zoom-rect");
-    const link = svg.selectAll(".lines").selectAll("path");
-    const node = svg.selectAll(".nodes").selectAll(".circle");
+    const link = svg.selectAll(".lines").selectAll(".line");
+    const node = svg.selectAll(".nodes").selectAll(".node");
     return { svg, link, node, zoomRect };
   }, []);
 
-  const ticked = (link, node) => {
+  const ticked = useCallback(() => {
+    const { link, node } = getNodes();
     link
       .attr("x1", ({ source }) => source.x)
       .attr("y1", ({ source }) => source.y)
@@ -35,7 +38,7 @@ function NetworkGraph({ data }) {
       .attr("d", positionLink);
 
     node
-      .selectAll("circle")
+      .selectAll(".node circle")
       .attr("cx", ({ x }) => x)
       .attr("cy", ({ y }) => y);
 
@@ -48,13 +51,12 @@ function NetworkGraph({ data }) {
       .selectAll("rect")
       .attr("x", ({ x }) => x)
       .attr("y", ({ y }) => y);
-  };
+  }, [getNodes]);
 
   const buildSimulation = useCallback(() => {
-    const { link, node } = getNodes();
     const { width, height } = getHeightWidth();
 
-    return d3
+    const simulation = d3
       .forceSimulation(nodes)
       .force(
         "link",
@@ -69,11 +71,11 @@ function NetworkGraph({ data }) {
         d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
       )
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("x", d3.forceX())
-      .force("y", d3.forceY())
-      .tick(500)
-      .on("tick", () => ticked(link, node));
-  }, [getNodes, links, nodes]);
+      .force("collision", d3.forceCollide().radius(CIRCLE_BASE_RADIUS));
+
+    simulation.restart();
+    simulation.tick(TICKS).on("tick", ticked);
+  }, [links, nodes, ticked]);
 
   const enableZoom = useCallback(() => {
     const { link, node, zoomRect } = getNodes();
@@ -97,23 +99,20 @@ function NetworkGraph({ data }) {
   }, [getNodes]);
 
   const draw = useCallback(() => {
-    const { svg } = getNodes();
+    const { node, link } = getNodes();
 
-    svg
-      .selectAll(".lines")
-      .selectAll("path")
+    link
       .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
       .join("path")
+      .attr("class", "line")
       .attr("stroke", "#177E89")
       .style("stroke-width", "0.2px")
       .style("fill", "none");
 
-    svg
-      .selectAll(".nodes")
-      .selectAll(".circle")
+    node
       .data(nodes, (d) => d.index)
       .join((enter) => {
-        const g = enter.append("g").attr("class", "circle");
+        const g = enter.append("g").attr("class", "node");
 
         g.append("circle")
           .attr("r", (d) =>
@@ -132,7 +131,7 @@ function NetworkGraph({ data }) {
 
         gText
           .append("text")
-          .text((d) => d.data.id)
+          .text((d) => d.data.name)
           .join("text")
           .style("font-size", (d) => (d.children ? "16px" : "12px"))
           .each(function (d) {
@@ -158,7 +157,7 @@ function NetworkGraph({ data }) {
 
         gText
           .append("text")
-          .text((d) => d.data.id)
+          .text((d) => d.data.name)
           .join("text")
           .style("font-size", (d) => (d.children ? "16px" : "12px"))
           .attr("fill", "black")
@@ -167,10 +166,7 @@ function NetworkGraph({ data }) {
 
         return g;
       });
-
-    buildSimulation();
-    enableZoom();
-  }, [links, nodes, buildSimulation, enableZoom, getNodes]);
+  }, [links, nodes, getNodes]);
 
   const updateViewportDimensions = useCallback(() => {
     const { svg, zoomRect } = getNodes();
@@ -201,7 +197,9 @@ function NetworkGraph({ data }) {
 
   useEffect(() => {
     draw();
-  }, [draw]);
+    buildSimulation();
+    enableZoom();
+  }, [draw, buildSimulation, enableZoom]);
 
   return (
     <StyledSVGContainer>

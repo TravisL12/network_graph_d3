@@ -37,17 +37,15 @@ const App = () => {
           <SSidebarContainer>
             <SSidebarInner>
               <button onClick={addNodes}>Add Nodes</button>
-              <h3>{data.id}</h3>
+              <h3>{data.name}</h3>
               {data.children.map((child) => {
                 return (
                   <ul key={`parent-${child.id}`}>
-                    <li style={{ background: child.color }}>ID: {child.id}</li>
+                    <li style={{ background: child.color }}>{child.name}</li>
                     {child.children && (
                       <ul>
-                        {child.children.map((child2) => {
-                          return (
-                            <li key={`child-${child2.id}`}>ID: {child2.id}</li>
-                          );
+                        {child.children.map((child2, idx) => {
+                          return <li key={`child-${idx}`}>{child2.name}</li>;
                         })}
                       </ul>
                     )}
