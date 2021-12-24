@@ -3,14 +3,14 @@ import throttle from "lodash.throttle";
 import { useCallback, useEffect, useRef } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
-import { update } from "lodash";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
 const CIRCLE_BASE_RADIUS = 8;
+const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
 const ARM_STRENGTH = -500;
 const ARM_MAX_DISTANCE = 250;
-const TICKS = 500;
+const LINK_STROKE_WIDTH = "0.2px";
 let transform = d3.zoomIdentity;
 
 function NetworkGraph({ data }) {
@@ -56,8 +56,10 @@ function NetworkGraph({ data }) {
   const buildSimulation = useCallback(() => {
     const { width, height } = getHeightWidth();
 
-    const simulation = d3
-      .forceSimulation(nodes)
+    const simulation = d3.forceSimulation();
+    simulation.restart();
+
+    simulation
       .force(
         "link",
         d3
@@ -66,6 +68,7 @@ function NetworkGraph({ data }) {
           .distance(50)
           .strength(2)
       )
+      .nodes(nodes)
       .force(
         "charge",
         d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
@@ -73,8 +76,7 @@ function NetworkGraph({ data }) {
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collision", d3.forceCollide().radius(CIRCLE_BASE_RADIUS));
 
-    simulation.restart();
-    simulation.tick(TICKS).on("tick", ticked);
+    simulation.alpha(0.1).on("tick", ticked);
   }, [links, nodes, ticked]);
 
   const enableZoom = useCallback(() => {
@@ -106,7 +108,7 @@ function NetworkGraph({ data }) {
       .join("path")
       .attr("class", "line")
       .attr("stroke", "#177E89")
-      .style("stroke-width", "0.2px")
+      .style("stroke-width", LINK_STROKE_WIDTH)
       .style("fill", "none");
 
     node
@@ -116,7 +118,7 @@ function NetworkGraph({ data }) {
 
         g.append("circle")
           .attr("r", (d) =>
-            d.children ? CIRCLE_BASE_RADIUS : CIRCLE_BASE_RADIUS * (4 / 6)
+            d.children ? CIRCLE_BASE_RADIUS : CHILD_CIRCLE_BASE_RADIUS
           )
           .style(
             "fill",
