@@ -17,39 +17,39 @@ function NetworkGraph({ data }) {
   const graphRef = useRef();
 
   const root = d3.hierarchy(data);
-  const linkData = root.links();
-  const nodeData = root.descendants();
+  const links = root.links();
+  const nodes = root.descendants();
 
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
     const zoomRect = svg.select(".zoom-rect");
-    const links = svg.selectAll(".lines").selectAll(".line");
-    const nodes = svg.selectAll(".nodes").selectAll(".node");
-    return { svg, links, nodes, zoomRect };
+    const link = svg.selectAll(".lines").selectAll(".line");
+    const node = svg.selectAll(".nodes").selectAll(".node");
+    return { svg, link, node, zoomRect };
   }, []);
 
   const simulation = useMemo(() => d3.forceSimulation(), []);
 
   const ticked = useCallback(() => {
-    const { links, nodes } = getNodes();
-    links
+    const { link, node } = getNodes();
+    link
       .attr("x1", ({ source }) => source.x)
       .attr("y1", ({ source }) => source.y)
       .attr("x2", ({ target }) => target.x)
       .attr("y2", ({ target }) => target.y)
       .attr("d", positionLink);
 
-    nodes
+    node
       .selectAll(".node circle")
       .attr("cx", ({ x }) => x)
       .attr("cy", ({ y }) => y);
 
-    nodes
+    node
       .selectAll("text")
       .attr("x", ({ x }) => x)
       .attr("y", ({ y }) => y);
 
-    nodes
+    node
       .selectAll("rect")
       .attr("x", ({ x }) => x)
       .attr("y", ({ y }) => y);
@@ -67,12 +67,12 @@ function NetworkGraph({ data }) {
       .force(
         "link",
         d3
-          .forceLink(linkData)
+          .forceLink(links)
           .id(({ id }) => id)
           .distance(50)
           .strength(2)
       )
-      .nodes(nodeData)
+      .nodes(nodes)
       .force(
         "charge",
         d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
@@ -81,22 +81,22 @@ function NetworkGraph({ data }) {
       .force("collision", d3.forceCollide(CIRCLE_BASE_RADIUS));
 
     simulation.on("tick", () => ticked(simulation));
-  }, [linkData, nodeData, ticked]);
+  }, [links, nodes, ticked]);
 
   const enableZoom = useCallback(() => {
-    const { links, nodes, zoomRect } = getNodes();
+    const { link, node, zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
 
     const zoomed = (event) => {
       transform = event.transform;
-      nodes.attr("transform", event.transform);
-      links.attr("transform", event.transform);
+      node.attr("transform", event.transform);
+      link.attr("transform", event.transform);
 
       // // hide text when zoomed way out
       if (transform.k < 0.9) {
-        nodes.selectAll(".child-node").style("display", "none");
+        node.selectAll(".child-node").style("display", "none");
       } else {
-        nodes.selectAll(".node-text").style("display", "block");
+        node.selectAll(".node-text").style("display", "block");
       }
     };
 
@@ -105,18 +105,18 @@ function NetworkGraph({ data }) {
   }, [getNodes]);
 
   const draw = useCallback(() => {
-    const { nodes, links } = getNodes();
+    const { node, link } = getNodes();
 
-    links
-      .data(linkData, (d) => `${d.source.data.id}-${d.target.data.id}`)
+    link
+      .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
       .join("path")
       .attr("class", "line")
       .attr("stroke", "#177E89")
       .style("stroke-width", LINK_STROKE_WIDTH)
       .style("fill", "none");
 
-    nodes
-      .data(nodeData, (d) => d.index)
+    node
+      .data(nodes, (d) => d.index)
       .join((enter) => {
         const g = enter.append("g").attr("class", "node");
 
@@ -172,7 +172,7 @@ function NetworkGraph({ data }) {
 
         return g;
       });
-  }, [linkData, nodeData, getNodes]);
+  }, [links, nodes, getNodes]);
 
   const updateViewportDimensions = useCallback(() => {
     const { svg, zoomRect } = getNodes();
