@@ -8,12 +8,14 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
 const CIRCLE_BASE_RADIUS = 8;
 const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
+const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS / 2;
 const ARM_STRENGTH = -500;
 const ARM_MAX_DISTANCE = 250;
 const LINK_STROKE_WIDTH = "0.2px";
 
-const ALPHA_MIN = 0.1; // stop speed
-const ALPHA = 0.25; // start speed
+const ALPHA_MIN = 0.05; // stop speed
+const ALPHA = 0.2; // start speed
+const ALPHA_DECAY = 0.2; // speed to decay to stop
 
 let transform = d3.zoomIdentity;
 
@@ -24,42 +26,8 @@ function NetworkGraph({ data }) {
 
   const updateNodes = useCallback(
     (updatedNodes, updatedLinks) => {
-      if (!nodes.length) {
-        setNodes(updatedNodes);
-        setLinks(updatedLinks);
-        return;
-      }
-
-      const oldNodes = nodes.reduce((acc, n) => {
-        acc[n.data.id] = n;
-        return acc;
-      }, {});
-      const newNodes = updatedNodes.map((d) => {
-        const existing = oldNodes[d.data.id];
-        if (existing) {
-          d.vx = existing.vx;
-          d.vy = existing.vy;
-          d.x = existing.x;
-          d.y = existing.y;
-        }
-
-        return d;
-      });
-
-      const oldLinks = links.reduce((acc, d) => {
-        acc[`${d.source.data.id}-${d.target.data.id}`] = d;
-        return acc;
-      }, {});
-      const newLinks = updatedLinks.map((d) => {
-        const newLink = Object.assign(
-          oldLinks[`${d.source.data.id}-${d.target.data.id}`] || {},
-          d
-        );
-        return newLink;
-      });
-
-      setNodes(newNodes);
-      setLinks(newLinks);
+      setNodes(updatedNodes);
+      setLinks(updatedLinks);
     },
     [nodes, links]
   );
@@ -122,17 +90,9 @@ function NetworkGraph({ data }) {
         "charge",
         d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
       )
-      .force("collision", d3.forceCollide(CIRCLE_BASE_RADIUS))
+      .force("collision", d3.forceCollide(COLLISION_DISTANCE))
       .on("tick", ticked);
   }, []);
-
-  const configureSimulation = useCallback(() => {
-    const { width, height } = getHeightWidth();
-    simulation.nodes(nodes);
-    simulation.force("link").links(links);
-    simulation.force("center", d3.forceCenter(width / 2, height / 2));
-    simulation.alpha(ALPHA).restart();
-  }, [simulation, nodes, links, ticked]);
 
   const enableZoom = useCallback(() => {
     const { link, node, zoomRect } = getNodes();
@@ -157,6 +117,12 @@ function NetworkGraph({ data }) {
 
   const draw = useCallback(() => {
     const { node, link } = getNodes();
+    const { width, height } = getHeightWidth();
+
+    const oldNodes = nodes.reduce((acc, n) => {
+      acc[n.data.id] = n;
+      return acc;
+    }, {});
 
     link
       .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
@@ -223,6 +189,23 @@ function NetworkGraph({ data }) {
 
         return g;
       });
+
+    const newNodes = nodes.map((d) => {
+      const existing = oldNodes[d.data.id];
+      if (existing) {
+        d.vx = existing.vx;
+        d.vy = existing.vy;
+        d.x = existing.x;
+        d.y = existing.y;
+      }
+
+      return d;
+    });
+
+    simulation.nodes(newNodes);
+    simulation.force("link").links(links);
+    simulation.force("center", d3.forceCenter(width / 2, height / 2));
+    simulation.alpha(ALPHA).restart();
   }, [links, nodes, getNodes]);
 
   const updateViewportDimensions = useCallback(() => {
@@ -254,9 +237,8 @@ function NetworkGraph({ data }) {
 
   useEffect(() => {
     draw();
-    configureSimulation();
     enableZoom();
-  }, [draw, configureSimulation, enableZoom]);
+  }, [draw, enableZoom]);
 
   return (
     <StyledSVGContainer>
