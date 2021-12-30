@@ -1,6 +1,6 @@
 import * as d3 from "d3";
-import throttle from "lodash.throttle";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { throttle } from "lodash";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
 
@@ -11,14 +11,65 @@ const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
 const ARM_STRENGTH = -500;
 const ARM_MAX_DISTANCE = 250;
 const LINK_STROKE_WIDTH = "0.2px";
+
+const ALPHA_MIN = 0.1; // stop speed
+const ALPHA = 0.25; // start speed
+
 let transform = d3.zoomIdentity;
 
 function NetworkGraph({ data }) {
   const graphRef = useRef();
+  const [links, setLinks] = useState([]);
+  const [nodes, setNodes] = useState([]);
 
-  const root = d3.hierarchy(data);
-  const links = root.links();
-  const nodes = root.descendants();
+  const updateNodes = useCallback(
+    (updatedNodes, updatedLinks) => {
+      if (!nodes.length) {
+        setNodes(updatedNodes);
+        setLinks(updatedLinks);
+        return;
+      }
+
+      const oldNodes = nodes.reduce((acc, n) => {
+        acc[n.data.id] = n;
+        return acc;
+      }, {});
+      const newNodes = updatedNodes.map((d) => {
+        const existing = oldNodes[d.data.id];
+        if (existing) {
+          d.vx = existing.vx;
+          d.vy = existing.vy;
+          d.x = existing.x;
+          d.y = existing.y;
+        }
+
+        return d;
+      });
+
+      const oldLinks = links.reduce((acc, d) => {
+        acc[`${d.source.data.id}-${d.target.data.id}`] = d;
+        return acc;
+      }, {});
+      const newLinks = updatedLinks.map((d) => {
+        const newLink = Object.assign(
+          oldLinks[`${d.source.data.id}-${d.target.data.id}`] || {},
+          d
+        );
+        return newLink;
+      });
+
+      setNodes(newNodes);
+      setLinks(newLinks);
+    },
+    [nodes, links]
+  );
+
+  const updateData = () => {
+    const root = d3.hierarchy(data);
+    updateNodes(root.descendants(), root.links());
+  };
+
+  useEffect(updateData, [data]);
 
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
@@ -28,10 +79,9 @@ function NetworkGraph({ data }) {
     return { svg, link, node, zoomRect };
   }, []);
 
-  const simulation = useMemo(() => d3.forceSimulation(), []);
-
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
+
     link
       .attr("x1", ({ source }) => source.x)
       .attr("y1", ({ source }) => source.y)
@@ -53,35 +103,36 @@ function NetworkGraph({ data }) {
       .selectAll("rect")
       .attr("x", ({ x }) => x)
       .attr("y", ({ y }) => y);
-
-    simulation.restart();
   }, [getNodes]);
 
-  const configureSimulation = useCallback(() => {
-    const { width, height } = getHeightWidth();
-
-    simulation
-      .alphaMin(0.1)
-      .alphaDecay(0.01)
-      .alpha(0.25)
+  const simulation = useMemo(() => {
+    return d3
+      .forceSimulation()
+      .alphaMin(ALPHA_MIN)
+      .alpha(ALPHA)
       .force(
         "link",
         d3
-          .forceLink(links)
+          .forceLink()
           .id(({ id }) => id)
           .distance(50)
           .strength(2)
       )
-      .nodes(nodes)
       .force(
         "charge",
         d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
       )
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide(CIRCLE_BASE_RADIUS));
+      .force("collision", d3.forceCollide(CIRCLE_BASE_RADIUS))
+      .on("tick", ticked);
+  }, []);
 
-    simulation.on("tick", () => ticked(simulation));
-  }, [links, nodes, ticked]);
+  const configureSimulation = useCallback(() => {
+    const { width, height } = getHeightWidth();
+    simulation.nodes(nodes);
+    simulation.force("link").links(links);
+    simulation.force("center", d3.forceCenter(width / 2, height / 2));
+    simulation.alpha(ALPHA).restart();
+  }, [simulation, nodes, links, ticked]);
 
   const enableZoom = useCallback(() => {
     const { link, node, zoomRect } = getNodes();
