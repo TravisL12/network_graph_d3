@@ -9,10 +9,11 @@ const MAX_ZOOM = 12;
 const CIRCLE_BASE_RADIUS = 8;
 const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
 const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS / 2;
-const ARM_STRENGTH = -500;
-const ARM_MAX_DISTANCE = 250;
-const LINK_STROKE_WIDTH = 0.2;
+const ARM_STRENGTH = -1000;
+const ARM_MAX_DISTANCE = 500;
+const LINK_STROKE_WIDTH = 0.3;
 const UPDATE_DURATION = 500;
+const STROKE_COLOR = "#177E89";
 
 const ALPHA_MIN = 0.05; // stop speed
 const ALPHA = 0.2; // start speed
@@ -59,8 +60,6 @@ function NetworkGraph({ nodes, links }) {
   const simulation = useMemo(() => {
     return d3
       .forceSimulation()
-      .alphaMin(ALPHA_MIN)
-      .alpha(ALPHA)
       .force(
         "link",
         d3
@@ -86,7 +85,7 @@ function NetworkGraph({ nodes, links }) {
       node.attr("transform", event.transform);
       link.attr("transform", event.transform);
 
-      // // hide text when zoomed way out
+      // hide text when zoomed way out
       if (transform.k < 0.9) {
         node.selectAll(".child-node").style("display", "none");
       } else {
@@ -102,26 +101,42 @@ function NetworkGraph({ nodes, links }) {
     const { node, link } = getNodes();
     const { width, height } = getHeightWidth();
 
+    // const oldNodes = nodes.reduce((acc, n) => {
+    //   acc[n.data.id] = n;
+    //   return acc;
+    // }, {});
+
+    // const newNodes = nodes.map((d) => {
+    //   const existing = oldNodes[d.data.id];
+    //   if (existing) {
+    //     d.vx = existing.vx;
+    //     d.vy = existing.vy;
+    //     d.x = existing.x;
+    //     d.y = existing.y;
+    //   }
+
+    //   return d;
+    // });
+
     link
       .data(links, (d) => {
         return `${d.source.data.id}-${d.target.data.id}`;
       })
-      .join(
-        (enter) => {
-          const path = enter
-            .append("path")
-            .attr("class", "line")
-            .attr("stroke", "#177E89")
-            .style("stroke-width", LINK_STROKE_WIDTH)
-            .style("fill", "none");
-          return path;
-        },
-        (update) => {
-          update
-            .attr("stroke", "red")
-            .style("stroke-width", LINK_STROKE_WIDTH * 10);
-        }
-      );
+      .join((enter) => {
+        const path = enter
+          .append("path")
+          .attr("class", "line")
+          .attr("stroke", d3.color(STROKE_COLOR).brighter(1.5))
+          .style("stroke-width", `${LINK_STROKE_WIDTH * 10}px`)
+          .style("fill", "none")
+          .call((e) => {
+            e.transition()
+              .duration(2000)
+              .attr("stroke", STROKE_COLOR)
+              .style("stroke-width", `${LINK_STROKE_WIDTH}px`);
+          });
+        return path;
+      });
 
     node
       .data(nodes, (d) => d.data.id)
@@ -155,12 +170,12 @@ function NetworkGraph({ nodes, links }) {
 
           gText.selectAll("text").remove();
 
-          const xMargin = 2;
+          const xMargin = 4;
           const yMargin = 0;
           gText
             .append("rect")
             .style("fill", "white")
-            .style("opacity", 0.75)
+            .style("opacity", 0.8)
             .attr("width", (d) => d.bbox.width + 2 * xMargin)
             .attr("height", (d) => d.bbox.height + 2 * yMargin)
             .attr("rx", "5")
@@ -186,24 +201,16 @@ function NetworkGraph({ nodes, links }) {
             u.transition().duration(UPDATE_DURATION);
           };
 
-          update.select(".node circle").style("fill", "pink").call(callUpdate);
-
-          update
-            .select(".node .node-text rect")
-            .style("fill", "black")
-            .call(callUpdate);
-
-          update
-            .select(".node .node-text text")
-            .style("fill", "white")
-            .call(callUpdate);
+          update.select(".node circle").call(callUpdate);
+          update.select(".node .node-text rect").call(callUpdate);
+          update.select(".node .node-text text").call(callUpdate);
         }
       );
 
     simulation.nodes(nodes);
     simulation.force("link").links(links);
     simulation.force("center", d3.forceCenter(width / 2, height / 2));
-    simulation.alpha(ALPHA).restart();
+    simulation.alphaMin(ALPHA_MIN).alpha(ALPHA).restart();
   }, [links, nodes, getNodes, simulation]);
 
   const updateViewportDimensions = useCallback(() => {
