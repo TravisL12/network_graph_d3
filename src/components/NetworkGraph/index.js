@@ -1,22 +1,25 @@
 import * as d3 from "d3";
 import { throttle } from "lodash";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
+
 const CIRCLE_BASE_RADIUS = 8;
 const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
-const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS / 2;
-const ARM_STRENGTH = -1000;
-const ARM_MAX_DISTANCE = 500;
-const LINK_STROKE_WIDTH = 0.3;
 const UPDATE_DURATION = 500;
+
+const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS / 6;
+const LINK_STROKE_WIDTH = 0.25;
 const STROKE_COLOR = "#177E89";
 
+const ARM_STRENGTH = -250;
+const ARM_MAX_DISTANCE = 1000;
+
 const ALPHA_MIN = 0.05; // stop speed
-const ALPHA = 0.2; // start speed
+const ALPHA = 0.5; // start speed
 // const ALPHA_DECAY = 0.2; // speed to decay to stop
 
 let transform = d3.zoomIdentity;
@@ -76,6 +79,15 @@ function NetworkGraph({ nodes, links }) {
       .on("tick", ticked);
   }, [ticked]);
 
+  const updateSimulation = () => {
+    const { width, height } = getHeightWidth();
+
+    simulation.nodes(nodes);
+    simulation.force("center", d3.forceCenter(width / 2, height / 2));
+    simulation.force("link").links(links);
+    simulation.alphaMin(ALPHA_MIN).alpha(ALPHA).restart();
+  };
+
   const enableZoom = useCallback(() => {
     const { link, node, zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
@@ -99,24 +111,6 @@ function NetworkGraph({ nodes, links }) {
 
   const draw = useCallback(() => {
     const { node, link } = getNodes();
-    const { width, height } = getHeightWidth();
-
-    // const oldNodes = nodes.reduce((acc, n) => {
-    //   acc[n.data.id] = n;
-    //   return acc;
-    // }, {});
-
-    // const newNodes = nodes.map((d) => {
-    //   const existing = oldNodes[d.data.id];
-    //   if (existing) {
-    //     d.vx = existing.vx;
-    //     d.vy = existing.vy;
-    //     d.x = existing.x;
-    //     d.y = existing.y;
-    //   }
-
-    //   return d;
-    // });
 
     link
       .data(links, (d) => {
@@ -131,7 +125,7 @@ function NetworkGraph({ nodes, links }) {
           .style("fill", "none")
           .call((e) => {
             e.transition()
-              .duration(2000)
+              .duration(UPDATE_DURATION * 3)
               .attr("stroke", STROKE_COLOR)
               .style("stroke-width", `${LINK_STROKE_WIDTH}px`);
           });
@@ -207,16 +201,12 @@ function NetworkGraph({ nodes, links }) {
         }
       );
 
-    simulation.nodes(nodes);
-    simulation.force("link").links(links);
-    simulation.force("center", d3.forceCenter(width / 2, height / 2));
-    simulation.alphaMin(ALPHA_MIN).alpha(ALPHA).restart();
+    updateSimulation();
   }, [links, nodes, getNodes, simulation]);
 
   const updateViewportDimensions = useCallback(() => {
     const { svg, zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
-
     svg.attr("width", width).attr("height", height);
     zoomRect.attr("width", width).attr("height", height);
   }, [getNodes]);
