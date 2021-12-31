@@ -1,3 +1,4 @@
+import * as d3 from "d3";
 import NetworkGraph from "../NetworkGraph";
 import { buildHiearchy, buildNode, randomizer } from "../../getData";
 import {
@@ -28,9 +29,13 @@ const App = () => {
     setData({ ...data, children });
   };
 
+  const root = d3.hierarchy(data);
+  const nodes = root.descendants();
+  const links = root.links();
+
   return (
     <SAppContainer>
-      <NetworkGraph data={data} />
+      <NetworkGraph nodes={nodes} links={links} />
       <StyledAppInner>
         <SHeader />
         <div style={{ overflow: "auto" }}>

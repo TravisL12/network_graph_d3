@@ -11,33 +11,17 @@ const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
 const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS / 2;
 const ARM_STRENGTH = -500;
 const ARM_MAX_DISTANCE = 250;
-const LINK_STROKE_WIDTH = "0.2px";
+const LINK_STROKE_WIDTH = 0.2;
+const UPDATE_DURATION = 500;
 
 const ALPHA_MIN = 0.05; // stop speed
 const ALPHA = 0.2; // start speed
-const ALPHA_DECAY = 0.2; // speed to decay to stop
+// const ALPHA_DECAY = 0.2; // speed to decay to stop
 
 let transform = d3.zoomIdentity;
 
-function NetworkGraph({ data }) {
+function NetworkGraph({ nodes, links }) {
   const graphRef = useRef();
-  const [links, setLinks] = useState([]);
-  const [nodes, setNodes] = useState([]);
-
-  const updateNodes = useCallback(
-    (updatedNodes, updatedLinks) => {
-      setNodes(updatedNodes);
-      setLinks(updatedLinks);
-    },
-    [nodes, links]
-  );
-
-  const updateData = () => {
-    const root = d3.hierarchy(data);
-    updateNodes(root.descendants(), root.links());
-  };
-
-  useEffect(updateData, [data]);
 
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
@@ -49,7 +33,6 @@ function NetworkGraph({ data }) {
 
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
-
     link
       .attr("x1", ({ source }) => source.x)
       .attr("y1", ({ source }) => source.y)
@@ -92,7 +75,7 @@ function NetworkGraph({ data }) {
       )
       .force("collision", d3.forceCollide(COLLISION_DISTANCE))
       .on("tick", ticked);
-  }, []);
+  }, [ticked]);
 
   const enableZoom = useCallback(() => {
     const { link, node, zoomRect } = getNodes();
@@ -119,94 +102,109 @@ function NetworkGraph({ data }) {
     const { node, link } = getNodes();
     const { width, height } = getHeightWidth();
 
-    const oldNodes = nodes.reduce((acc, n) => {
-      acc[n.data.id] = n;
-      return acc;
-    }, {});
-
     link
-      .data(links, (d) => `${d.source.data.id}-${d.target.data.id}`)
-      .join("path")
-      .attr("class", "line")
-      .attr("stroke", "#177E89")
-      .style("stroke-width", LINK_STROKE_WIDTH)
-      .style("fill", "none");
+      .data(links, (d) => {
+        return `${d.source.data.id}-${d.target.data.id}`;
+      })
+      .join(
+        (enter) => {
+          const path = enter
+            .append("path")
+            .attr("class", "line")
+            .attr("stroke", "#177E89")
+            .style("stroke-width", LINK_STROKE_WIDTH)
+            .style("fill", "none");
+          return path;
+        },
+        (update) => {
+          update
+            .attr("stroke", "red")
+            .style("stroke-width", LINK_STROKE_WIDTH * 10);
+        }
+      );
 
     node
-      .data(nodes, (d) => d.index)
-      .join((enter) => {
-        const g = enter.append("g").attr("class", "node");
+      .data(nodes, (d) => d.data.id)
+      .join(
+        (enter) => {
+          const g = enter.append("g").attr("class", "node");
 
-        g.append("circle")
-          .attr("r", (d) =>
-            d.children ? CIRCLE_BASE_RADIUS : CHILD_CIRCLE_BASE_RADIUS
-          )
-          .style(
-            "fill",
-            (d) => d.data.color || d3.color(d.parent.data.color).brighter(1.6)
-          );
+          g.append("circle")
+            .attr("r", (d) =>
+              d.children ? CIRCLE_BASE_RADIUS : CHILD_CIRCLE_BASE_RADIUS
+            )
+            .style(
+              "fill",
+              (d) => d.data.color || d3.color(d.parent.data.color).brighter(1.6)
+            );
 
-        const gText = g
-          .append("g")
-          .attr("class", (d) =>
-            d.children ? "node-text parent-node" : "node-text child-node"
-          );
+          const gText = g
+            .append("g")
+            .attr("class", (d) =>
+              d.children ? "node-text parent-node" : "node-text child-node"
+            );
 
-        gText
-          .append("text")
-          .text((d) => d.data.name)
-          .join("text")
-          .style("font-size", (d) => (d.children ? "16px" : "12px"))
-          .each(function (d) {
-            d.bbox = this.getBBox();
-          });
+          gText
+            .append("text")
+            .text((d) => d.data.name)
+            .join("text")
+            .style("font-size", (d) => (d.children ? "16px" : "12px"))
+            .each(function (d) {
+              d.bbox = this.getBBox();
+            });
 
-        gText.selectAll("text").remove();
+          gText.selectAll("text").remove();
 
-        const xMargin = 2;
-        const yMargin = 0;
-        gText
-          .append("rect")
-          .style("fill", "white")
-          .style("opacity", 0.75)
-          .attr("width", (d) => d.bbox.width + 2 * xMargin)
-          .attr("height", (d) => d.bbox.height + 2 * yMargin)
-          .attr("rx", "5")
-          .attr("transform", function (d) {
-            return `translate(-${
-              (d.bbox.width + xMargin) / 2
-            }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + yMargin})`;
-          });
+          const xMargin = 2;
+          const yMargin = 0;
+          gText
+            .append("rect")
+            .style("fill", "white")
+            .style("opacity", 0.75)
+            .attr("width", (d) => d.bbox.width + 2 * xMargin)
+            .attr("height", (d) => d.bbox.height + 2 * yMargin)
+            .attr("rx", "5")
+            .attr("transform", function (d) {
+              return `translate(-${
+                (d.bbox.width + xMargin) / 2
+              }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + yMargin})`;
+            });
 
-        gText
-          .append("text")
-          .text((d) => d.data.name)
-          .join("text")
-          .style("font-size", (d) => (d.children ? "16px" : "12px"))
-          .attr("fill", "black")
-          .style("text-anchor", "middle")
-          .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
+          gText
+            .append("text")
+            .text((d) => d.data.name)
+            .join("text")
+            .style("font-size", (d) => (d.children ? "16px" : "12px"))
+            .attr("fill", "black")
+            .style("text-anchor", "middle")
+            .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
 
-        return g;
-      });
+          return g;
+        },
+        (update) => {
+          const callUpdate = (u) => {
+            u.transition().duration(UPDATE_DURATION);
+          };
 
-    const newNodes = nodes.map((d) => {
-      const existing = oldNodes[d.data.id];
-      if (existing) {
-        d.vx = existing.vx;
-        d.vy = existing.vy;
-        d.x = existing.x;
-        d.y = existing.y;
-      }
+          update.select(".node circle").style("fill", "pink").call(callUpdate);
 
-      return d;
-    });
+          update
+            .select(".node .node-text rect")
+            .style("fill", "black")
+            .call(callUpdate);
 
-    simulation.nodes(newNodes);
+          update
+            .select(".node .node-text text")
+            .style("fill", "white")
+            .call(callUpdate);
+        }
+      );
+
+    simulation.nodes(nodes);
     simulation.force("link").links(links);
     simulation.force("center", d3.forceCenter(width / 2, height / 2));
     simulation.alpha(ALPHA).restart();
-  }, [links, nodes, getNodes]);
+  }, [links, nodes, getNodes, simulation]);
 
   const updateViewportDimensions = useCallback(() => {
     const { svg, zoomRect } = getNodes();
