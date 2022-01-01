@@ -114,7 +114,7 @@ function NetworkGraph({ nodes, links }) {
 
     link
       .data(links, (d) => {
-        return `${d.source.data.id}-${d.target.data.id}`;
+        return `${d.source.id}-${d.target.id}`;
       })
       .join((enter) => {
         const path = enter
@@ -133,7 +133,7 @@ function NetworkGraph({ nodes, links }) {
       });
 
     node
-      .data(nodes, (d) => d.data.id)
+      .data(nodes, (d) => d.id)
       .join(
         (enter) => {
           const g = enter.append("g").attr("class", "node");
@@ -144,7 +144,7 @@ function NetworkGraph({ nodes, links }) {
             )
             .style(
               "fill",
-              (d) => d.data.color || d3.color(d.parent.data.color).brighter(1.6)
+              (d) => d.color || d3.color(d.parent.color).brighter(1.6)
             );
 
           const gText = g
@@ -155,7 +155,7 @@ function NetworkGraph({ nodes, links }) {
 
           gText
             .append("text")
-            .text((d) => d.data.name)
+            .text((d) => d.name)
             .join("text")
             .style("font-size", (d) => (d.children ? "16px" : "12px"))
             .each(function (d) {
@@ -181,7 +181,7 @@ function NetworkGraph({ nodes, links }) {
 
           gText
             .append("text")
-            .text((d) => d.data.name)
+            .text((d) => d.name)
             .join("text")
             .style("font-size", (d) => (d.children ? "16px" : "12px"))
             .attr("fill", "black")

@@ -1,6 +1,11 @@
 import * as d3 from "d3";
 import NetworkGraph from "../NetworkGraph";
-import { buildHiearchy, buildNode, randomizer } from "../../getData";
+import {
+  simpleData,
+  buildHiearchy,
+  buildNode,
+  randomizer,
+} from "../../getData";
 import {
   SAppContainer,
   StyledAppInner,
@@ -29,9 +34,11 @@ const App = () => {
     setData({ ...data, children });
   };
 
-  const root = d3.hierarchy(data);
-  const nodes = root.descendants();
-  const links = root.links();
+  // const root = d3.hierarchy(data);
+  // const nodes = root.descendants();
+  // const links = root.links();
+
+  const { nodes, links } = simpleData();
 
   return (
     <SAppContainer>
@@ -42,7 +49,7 @@ const App = () => {
           <SSidebarContainer>
             <SSidebarInner>
               <button onClick={addNodes}>Add Nodes</button>
-              <h3>{data.name}</h3>
+              {/* <h3>{data.name}</h3>
               {data.children.map((child) => {
                 return (
                   <ul key={`parent-${child.id}`}>
@@ -56,7 +63,7 @@ const App = () => {
                     )}
                   </ul>
                 );
-              })}
+              })} */}
             </SSidebarInner>
           </SSidebarContainer>
         </div>
