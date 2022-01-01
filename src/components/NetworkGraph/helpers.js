@@ -1,5 +1,6 @@
 // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
 export const positionLink = (d) => {
+  console.log(d);
   const r = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y);
   // return `M${d.source.x},${d.source.y} L ${d.target.x},${d.target.y}`; // straight line
   return `

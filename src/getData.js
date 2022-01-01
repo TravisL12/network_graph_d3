@@ -51,3 +51,24 @@ export const buildHiearchy = () => {
     color: "magenta",
   };
 };
+
+export const simpleData = () => {
+  const root = {
+    id: "Gyan",
+    name: "Gyan",
+    color: "magenta",
+  };
+  const nodes = [root];
+  const links = [];
+  for (let i = 0; i < 3; i++) {
+    const id = randomizer(1000, 1);
+    const node = {
+      id,
+      name: lorem.generateWords(2),
+      color: getColor(),
+    };
+    nodes.push(node);
+    links.push({ target: { id }, source: { id: root.id } });
+  }
+  return { nodes, links };
+};

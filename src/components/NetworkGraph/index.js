@@ -214,19 +214,7 @@ function NetworkGraph({ nodes, links }) {
   const throttledResize = throttle(updateViewportDimensions, 100);
 
   useEffect(() => {
-    const { svg } = getNodes();
-    svg
-      .append("rect")
-      .attr("class", "zoom-rect")
-      .style("fill", "none")
-      .style("pointer-events", "all");
-
-    const main = svg.append("g").attr("class", "main");
-    main.append("g").attr("class", "lines");
-    main.append("g").attr("class", "nodes");
-
     updateViewportDimensions();
-
     window.addEventListener("resize", throttledResize);
   }, []);
 
@@ -237,7 +225,16 @@ function NetworkGraph({ nodes, links }) {
 
   return (
     <StyledSVGContainer>
-      <svg ref={graphRef}></svg>
+      <svg ref={graphRef}>
+        <rect
+          className="zoom-rect"
+          style={{ fill: "none", pointerEvents: "all" }}
+        />
+        <g className="main">
+          <g className="lines"></g>
+          <g className="nodes"></g>
+        </g>
+      </svg>
     </StyledSVGContainer>
   );
 }
