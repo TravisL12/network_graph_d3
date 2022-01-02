@@ -10,11 +10,13 @@ import {
 } from "../../styles";
 import { useState } from "react";
 
-function randomNode(nodes) {
-  const idx = randomizer(nodes.length - 1);
-  return nodes[idx];
+function randomNode(nodes, isParents = false) {
+  const n = isParents ? nodes.filter((n) => n.isParent) : nodes;
+  const idx = randomizer(n.length - 1);
+  return n[idx];
 }
 let rootCount = 0;
+let parentCount = 0;
 const App = () => {
   const [data, setData] = useState(simpleData());
 
@@ -33,8 +35,10 @@ const App = () => {
 
   const addNodes = () => {
     const copyNodes = [...data.nodes];
-    const root = rootCount < 3 ? nodes[0] : randomNode(copyNodes);
+    const root =
+      rootCount < 3 ? nodes[0] : randomNode(copyNodes, parentCount > 10);
     rootCount += 1;
+    parentCount += 1;
 
     root.isParent = true;
 
