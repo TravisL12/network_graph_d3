@@ -11,13 +11,13 @@ const UPDATE_DURATION = 500;
 const CIRCLE_BASE_RADIUS = 8;
 const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
 
-const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 2;
+const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS;
 const STROKE_COLOR = "#177E89";
 
 const LINK_STROKE_WIDTH = 0.25;
 const LINK_DISTANCE = 200;
 
-const ARM_STRENGTH = -250;
+const ARM_STRENGTH = -500;
 const ARM_MAX_DISTANCE = 500;
 
 const ALPHA_MIN = 0.05; // stop speed
@@ -75,11 +75,8 @@ function NetworkGraph({ nodes, links }) {
           .id(({ id }) => id)
           .distance(LINK_DISTANCE)
       )
-      .force(
-        "charge",
-        d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
-      )
-      .force("collision", d3.forceCollide(COLLISION_DISTANCE))
+      .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
+      .force("collision", d3.forceCollide().radius(COLLISION_DISTANCE))
       .on("tick", ticked);
   }, [ticked]);
 
@@ -90,7 +87,7 @@ function NetworkGraph({ nodes, links }) {
     simulation.force("x", d3.forceX().x(width / 2));
     simulation.force("y", d3.forceY().y(height / 2));
     simulation.force("link").links(links);
-    simulation.alphaMin(ALPHA_MIN).alpha(ALPHA).restart();
+    simulation.alphaMin(ALPHA_MIN).alpha(ALPHA).tick(50).restart();
   };
 
   const enableZoom = useCallback(() => {
@@ -208,10 +205,7 @@ function NetworkGraph({ nodes, links }) {
 
           update.select(".node circle").call(callUpdate);
           update.select(".node .node-text rect").call(callUpdate);
-          update
-            .select(".node .node-text text")
-            .style("font-size", (d) => (d.isParent ? "16px" : "12px"))
-            .call(callUpdate);
+          update.select(".node .node-text text").call(callUpdate);
         }
       );
 
