@@ -6,17 +6,19 @@ import { StyledSVGContainer } from "../../styles";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
+const UPDATE_DURATION = 500;
 
 const CIRCLE_BASE_RADIUS = 8;
 const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
-const UPDATE_DURATION = 500;
 
-const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 1.2;
-const LINK_STROKE_WIDTH = 0.25;
+const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 2;
 const STROKE_COLOR = "#177E89";
 
+const LINK_STROKE_WIDTH = 0.25;
+const LINK_DISTANCE = 200;
+
 const ARM_STRENGTH = -250;
-const ARM_MAX_DISTANCE = 1000;
+const ARM_MAX_DISTANCE = 500;
 
 const ALPHA_MIN = 0.05; // stop speed
 const ALPHA = 0.5; // start speed
@@ -39,6 +41,7 @@ function NetworkGraph({ nodes, links }) {
 
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
+
     link
       .attr("x1", ({ source }) => source.x)
       .attr("y1", ({ source }) => source.y)
@@ -70,8 +73,7 @@ function NetworkGraph({ nodes, links }) {
         d3
           .forceLink()
           .id(({ id }) => id)
-          .distance(50)
-          .strength(2)
+          .distance(LINK_DISTANCE)
       )
       .force(
         "charge",
@@ -85,7 +87,8 @@ function NetworkGraph({ nodes, links }) {
     const { width, height } = getHeightWidth();
 
     simulation.nodes(nodes);
-    simulation.force("center", d3.forceCenter(width / 2, height / 2));
+    simulation.force("x", d3.forceX().x(width / 2));
+    simulation.force("y", d3.forceY().y(height / 2));
     simulation.force("link").links(links);
     simulation.alphaMin(ALPHA_MIN).alpha(ALPHA).restart();
   };

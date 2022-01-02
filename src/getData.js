@@ -39,7 +39,7 @@ export const generateNodes = (root, color) => {
 
 export const simpleData = () => {
   const root = {
-    id: "Gyan",
+    id: 1500,
     name: "Gyan",
     color: "magenta",
     isParent: true,

@@ -1,3 +1,4 @@
+import * as d3 from "d3";
 import NetworkGraph from "../NetworkGraph";
 import { getColor, simpleData, generateNodes, randomizer } from "../../getData";
 import {
@@ -47,7 +48,6 @@ const App = () => {
   };
 
   const { nodes, links } = data;
-
   // const grouped = d3.groups(links, (d) => d.source.id || d.source);
 
   return (
