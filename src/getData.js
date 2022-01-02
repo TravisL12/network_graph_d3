@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { LoremIpsum } from "lorem-ipsum";
 
+const colors = d3.schemeCategory10;
 const lorem = new LoremIpsum({
   sentencesPerParagraph: {
     max: 8,
@@ -12,44 +13,28 @@ const lorem = new LoremIpsum({
   },
 });
 
-lorem.generateWords(1);
-
 export function randomizer(max = 1, min = 0) {
   return Math.round(Math.random() * (max - min) + min);
 }
 
-const colors = d3.schemeCategory10;
-
-const getColor = () => {
-  const idx = randomizer(colors.length - 1);
-  return colors[idx];
+export const getColor = () => {
+  return colors[randomizer(colors.length - 1)];
 };
 
-export const buildNode = (num, allNodes = false, level = 0) => {
-  const children = [];
-  for (let i = 0; i < num; i++) {
+export const generateNodes = (root, color) => {
+  const nodes = [];
+  const links = [];
+  for (let i = 0; i < 4; i++) {
     const id = randomizer(1000, 1);
-    const child =
-      (id > 850 && level < 1) || allNodes
-        ? {
-            id,
-            name: lorem.generateWords(2),
-            children: buildNode(randomizer(4, 2), false, level + 1),
-            color: getColor(),
-          }
-        : { id, name: lorem.generateWords(1) };
-    children.push(child);
+    const node = {
+      id,
+      name: lorem.generateWords(2),
+      color: color || root.color,
+    };
+    nodes.push(node);
+    links.push({ target: node.id, source: root.id });
   }
-  return children;
-};
-
-export const buildHiearchy = () => {
-  return {
-    id: "Gyan",
-    name: "Gyan",
-    children: buildNode(4, true),
-    color: "magenta",
-  };
+  return { nodes, links };
 };
 
 export const simpleData = () => {
@@ -57,18 +42,9 @@ export const simpleData = () => {
     id: "Gyan",
     name: "Gyan",
     color: "magenta",
+    isParent: true,
   };
-  const nodes = [root];
-  const links = [];
-  for (let i = 0; i < 3; i++) {
-    const id = randomizer(1000, 1);
-    const node = {
-      id,
-      name: lorem.generateWords(2),
-      color: getColor(),
-    };
-    nodes.push(node);
-    links.push({ target: { id }, source: { id: root.id } });
-  }
-  return { nodes, links };
+
+  const { nodes, links } = generateNodes(root);
+  return { nodes: [root, ...nodes], links };
 };

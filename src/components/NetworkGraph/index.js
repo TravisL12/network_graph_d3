@@ -11,7 +11,7 @@ const CIRCLE_BASE_RADIUS = 8;
 const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
 const UPDATE_DURATION = 500;
 
-const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS / 6;
+const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 1.2;
 const LINK_STROKE_WIDTH = 0.25;
 const STROKE_COLOR = "#177E89";
 
@@ -22,6 +22,8 @@ const ALPHA_MIN = 0.05; // stop speed
 const ALPHA = 0.5; // start speed
 // const ALPHA_DECAY = 0.2; // speed to decay to stop
 
+const xMargin = 4;
+const yMargin = 0;
 let transform = d3.zoomIdentity;
 
 function NetworkGraph({ nodes, links }) {
@@ -114,7 +116,7 @@ function NetworkGraph({ nodes, links }) {
 
     link
       .data(links, (d) => {
-        return `${d.source.id}-${d.target.id}`;
+        return `${d.source.id || d.source}-${d.target.id || d.target}`;
       })
       .join((enter) => {
         const path = enter
@@ -133,14 +135,16 @@ function NetworkGraph({ nodes, links }) {
       });
 
     node
-      .data(nodes, (d) => d.id)
+      .data(nodes, (d) => {
+        return d.id;
+      })
       .join(
         (enter) => {
           const g = enter.append("g").attr("class", "node");
 
           g.append("circle")
             .attr("r", (d) =>
-              d.children ? CIRCLE_BASE_RADIUS : CHILD_CIRCLE_BASE_RADIUS
+              d.isParent ? CIRCLE_BASE_RADIUS : CHILD_CIRCLE_BASE_RADIUS
             )
             .style(
               "fill",
@@ -150,22 +154,20 @@ function NetworkGraph({ nodes, links }) {
           const gText = g
             .append("g")
             .attr("class", (d) =>
-              d.children ? "node-text parent-node" : "node-text child-node"
+              d.isParent ? "node-text parent-node" : "node-text child-node"
             );
 
           gText
             .append("text")
             .text((d) => d.name)
             .join("text")
-            .style("font-size", (d) => (d.children ? "16px" : "12px"))
+            .style("font-size", (d) => (d.isParent ? "16px" : "12px"))
             .each(function (d) {
               d.bbox = this.getBBox();
             });
 
           gText.selectAll("text").remove();
 
-          const xMargin = 4;
-          const yMargin = 0;
           gText
             .append("rect")
             .style("fill", "white")
@@ -183,7 +185,7 @@ function NetworkGraph({ nodes, links }) {
             .append("text")
             .text((d) => d.name)
             .join("text")
-            .style("font-size", (d) => (d.children ? "16px" : "12px"))
+            .style("font-size", (d) => (d.isParent ? "16px" : "12px"))
             .attr("fill", "black")
             .style("text-anchor", "middle")
             .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
@@ -195,9 +197,18 @@ function NetworkGraph({ nodes, links }) {
             u.transition().duration(UPDATE_DURATION);
           };
 
+          update
+            .select(".node .node-text")
+            .attr("class", (d) =>
+              d.isParent ? "node-text parent-node" : "node-text child-node"
+            );
+
           update.select(".node circle").call(callUpdate);
           update.select(".node .node-text rect").call(callUpdate);
-          update.select(".node .node-text text").call(callUpdate);
+          update
+            .select(".node .node-text text")
+            .style("font-size", (d) => (d.isParent ? "16px" : "12px"))
+            .call(callUpdate);
         }
       );
 

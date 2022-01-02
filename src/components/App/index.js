@@ -1,11 +1,5 @@
-import * as d3 from "d3";
 import NetworkGraph from "../NetworkGraph";
-import {
-  simpleData,
-  buildHiearchy,
-  buildNode,
-  randomizer,
-} from "../../getData";
+import { getColor, simpleData, generateNodes, randomizer } from "../../getData";
 import {
   SAppContainer,
   StyledAppInner,
@@ -15,30 +9,46 @@ import {
 } from "../../styles";
 import { useState } from "react";
 
-const App = () => {
-  const [data, setData] = useState(buildHiearchy());
+function randomNode(nodes) {
+  const idx = randomizer(nodes.length - 1);
+  return nodes[idx];
+}
 
-  const addNodes = () => {
-    const nodes = buildNode(3, true, 1);
-    let children = JSON.parse(JSON.stringify(data.children));
-    const childIdxs = children.reduce((acc, c, idx) => {
-      if (c.children) acc.push(idx);
-      return acc;
-    }, []);
-    if (childIdxs.length > 0) {
-      const idx = childIdxs[randomizer(childIdxs.length - 1)];
-      children[idx].children = children[idx].children.concat(nodes);
-    } else {
-      children = children.concat(nodes);
+const App = () => {
+  const [data, setData] = useState(simpleData());
+
+  const addLinks = () => {
+    const newLinks = [];
+    for (let i = 0; i < 5; i++) {
+      const source = randomNode(data.nodes);
+      const target = randomNode(data.nodes);
+      newLinks.push({
+        source: source.id || source,
+        target: target.id || target,
+      });
     }
-    setData({ ...data, children });
+    setData({ ...data, links: [...data.links, ...newLinks] });
   };
 
-  // const root = d3.hierarchy(data);
-  // const nodes = root.descendants();
-  // const links = root.links();
+  const addNodes = () => {
+    const copyNodes = [...data.nodes];
+    const root = randomNode(copyNodes);
+    root.isParent = true;
 
-  const { nodes, links } = simpleData();
+    const { nodes: newNodes, links: newLinks } = generateNodes(
+      root,
+      getColor()
+    );
+
+    setData({
+      nodes: [...copyNodes, ...newNodes],
+      links: [...data.links, ...newLinks],
+    });
+  };
+
+  const { nodes, links } = data;
+
+  // const grouped = d3.groups(links, (d) => d.source.id || d.source);
 
   return (
     <SAppContainer>
@@ -49,6 +59,7 @@ const App = () => {
           <SSidebarContainer>
             <SSidebarInner>
               <button onClick={addNodes}>Add Nodes</button>
+              <button onClick={addLinks}>Add Links</button>
               {/* <h3>{data.name}</h3>
               {data.children.map((child) => {
                 return (
