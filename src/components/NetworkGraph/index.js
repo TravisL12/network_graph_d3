@@ -11,14 +11,14 @@ const UPDATE_DURATION = 500;
 const CIRCLE_BASE_RADIUS = 8;
 const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
 
-const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS;
+const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
 const STROKE_COLOR = "#177E89";
 
 const LINK_STROKE_WIDTH = 0.25;
 const LINK_DISTANCE = 200;
 
-const ARM_STRENGTH = -500;
-const ARM_MAX_DISTANCE = 500;
+const ARM_STRENGTH = 50;
+const ARM_MAX_DISTANCE = 200;
 
 const ALPHA_MIN = 0.05; // stop speed
 const ALPHA = 0.5; // start speed
@@ -41,6 +41,10 @@ function NetworkGraph({ nodes, links }) {
 
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
+    const { width, height } = getHeightWidth();
+
+    nodes[0].x = width / 2;
+    nodes[0].y = height / 2;
 
     link
       .attr("x1", ({ source }) => source.x)
@@ -63,7 +67,7 @@ function NetworkGraph({ nodes, links }) {
       .selectAll("rect")
       .attr("x", ({ x }) => x)
       .attr("y", ({ y }) => y);
-  }, [getNodes]);
+  }, [getNodes, nodes]);
 
   const simulation = useMemo(() => {
     return d3
@@ -74,9 +78,13 @@ function NetworkGraph({ nodes, links }) {
           .forceLink()
           .id(({ id }) => id)
           .distance(LINK_DISTANCE)
+          .strength(2)
       )
-      .force("charge", d3.forceManyBody().strength(ARM_STRENGTH))
-      .force("collision", d3.forceCollide().radius(COLLISION_DISTANCE))
+      .force(
+        "charge",
+        d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
+      )
+      .force("collision", d3.forceCollide(COLLISION_DISTANCE + 1))
       .on("tick", ticked);
   }, [ticked]);
 
@@ -84,10 +92,17 @@ function NetworkGraph({ nodes, links }) {
     const { width, height } = getHeightWidth();
 
     simulation.nodes(nodes);
-    simulation.force("x", d3.forceX().x(width / 2));
-    simulation.force("y", d3.forceY().y(height / 2));
+    // if (!simulation.force("center")) {
+    //   simulation.force("center", d3.forceCenter(width / 2, height / 2));
+    // }
+    // simulation.force("x", d3.forceX(width / 2));
+    // simulation.force("y", d3.forceY(height / 2));
+    // simulation.force("gravity", function (d) {
+    //   return d * 0.25;
+    // })
+    simulation.force("radial", d3.forceRadial(500, width / 2, height / 2));
     simulation.force("link").links(links);
-    simulation.alphaMin(ALPHA_MIN).alpha(ALPHA).tick(50).restart();
+    simulation.alphaMin(ALPHA_MIN).alpha(ALPHA).restart();
   };
 
   const enableZoom = useCallback(() => {
@@ -113,7 +128,7 @@ function NetworkGraph({ nodes, links }) {
 
   const draw = useCallback(() => {
     const { node, link } = getNodes();
-
+    simulation.stop();
     link
       .data(links, (d) => {
         return `${d.source.id || d.source}-${d.target.id || d.target}`;

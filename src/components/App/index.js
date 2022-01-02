@@ -14,7 +14,7 @@ function randomNode(nodes) {
   const idx = randomizer(nodes.length - 1);
   return nodes[idx];
 }
-
+let rootCount = 0;
 const App = () => {
   const [data, setData] = useState(simpleData());
 
@@ -33,7 +33,9 @@ const App = () => {
 
   const addNodes = () => {
     const copyNodes = [...data.nodes];
-    const root = randomNode(copyNodes);
+    const root = rootCount < 3 ? nodes[0] : randomNode(copyNodes);
+    rootCount += 1;
+
     root.isParent = true;
 
     const { nodes: newNodes, links: newLinks } = generateNodes(

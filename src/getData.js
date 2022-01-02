@@ -31,6 +31,12 @@ export const generateNodes = (root, color) => {
       name: lorem.generateWords(2),
       color: color || root.color,
     };
+
+    if (root.x && root.y) {
+      node.x = root.x;
+      node.y = root.y;
+    }
+
     nodes.push(node);
     links.push({ target: node.id, source: root.id });
   }
