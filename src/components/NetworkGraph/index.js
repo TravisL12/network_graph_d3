@@ -3,7 +3,6 @@ import { throttle } from "lodash";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
-import { hoverCircleCheck } from "./graphTransforms";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
@@ -29,6 +28,10 @@ const ALPHA_DECAY = 0.1; // speed to decay to stop
 const xMargin = 4;
 const yMargin = 0;
 let transform = d3.zoomIdentity;
+
+const hoverCircleCheck = (isHovered, r) => {
+  return isHovered ? r * 2 : r;
+};
 
 function NetworkGraph({ nodes, links, hoverNode }) {
   const graphRef = useRef();
@@ -135,6 +138,15 @@ function NetworkGraph({ nodes, links, hoverNode }) {
       : CHILD_CIRCLE_BASE_RADIUS;
   };
 
+  const handleMouseOver = (event) => {
+    const d = d3.select(event.target.parentNode).data();
+    handleHoverNode(d[0]);
+  };
+
+  const handleMouseOut = () => {
+    handleHoverNode(null);
+  };
+
   const draw = useCallback(() => {
     const { node, link } = getNodes();
 
@@ -171,14 +183,18 @@ function NetworkGraph({ nodes, links, hoverNode }) {
             .style(
               "fill",
               (d) => d.color || d3.color(d.parent.color).brighter(1.6)
-            );
+            )
+            .on("mouseover", handleMouseOver)
+            .on("mouseout", handleMouseOut);
 
           const gText = g
             .append("g")
             .style("opacity", "0")
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
-            );
+            )
+            .on("mouseover", handleMouseOver)
+            .on("mouseout", handleMouseOut);
 
           gText
             .append("text")
@@ -246,7 +262,7 @@ function NetworkGraph({ nodes, links, hoverNode }) {
 
   const throttledResize = throttle(updateViewportDimensions, 100);
 
-  const handleHoverNode = () => {
+  const handleHoverNode = (selectedNode) => {
     const { node } = getNodes();
     const hoverDuration = 250;
 
@@ -260,37 +276,37 @@ function NetworkGraph({ nodes, links, hoverNode }) {
       .transition()
       .duration(hoverDuration);
 
-    if (hoverNode?.isParent) {
+    if (selectedNode?.isParent) {
       const childIds = links
-        .filter((link) => link.source.id === hoverNode.id)
+        .filter((link) => link.source.id === selectedNode.id)
         .map(({ target }) => target.id);
 
       circleSelection
         .attr("r", (d) => {
           return hoverCircleCheck(
-            [hoverNode.id, ...childIds].includes(d.id),
+            [selectedNode.id, ...childIds].includes(d.id),
             getNodeRadius(d)
           );
         })
         .attr("stroke", (d) =>
-          [hoverNode.id, ...childIds].includes(d.id) ? "black" : "none"
+          [selectedNode.id, ...childIds].includes(d.id) ? "black" : "none"
         )
         .attr("stroke-width", (d) =>
-          [hoverNode.id, ...childIds].includes(d.id) ? "4px" : 0
+          [selectedNode.id, ...childIds].includes(d.id) ? "4px" : 0
         );
 
       textSelection.style("opacity", (d) => {
-        return [hoverNode.id, ...childIds].includes(d.id) ? "100" : "0";
+        return [selectedNode.id, ...childIds].includes(d.id) ? "100" : "0";
       });
     } else {
       circleSelection
         .attr("r", (d) =>
-          hoverCircleCheck(d.id === hoverNode?.id, getNodeRadius(d))
+          hoverCircleCheck(d.id === selectedNode?.id, getNodeRadius(d))
         )
-        .attr("stroke", (d) => (d.id === hoverNode?.id ? "black" : "none"))
-        .attr("stroke-width", (d) => (d.id === hoverNode?.id ? "4px" : 0));
+        .attr("stroke", (d) => (d.id === selectedNode?.id ? "black" : "none"))
+        .attr("stroke-width", (d) => (d.id === selectedNode?.id ? "4px" : 0));
       textSelection.style("opacity", (d) => {
-        return d.id === hoverNode?.id ? "100" : "0";
+        return d.id === selectedNode?.id ? "100" : "0";
       });
     }
   };
@@ -306,7 +322,7 @@ function NetworkGraph({ nodes, links, hoverNode }) {
   }, [draw, enableZoom]);
 
   useEffect(() => {
-    handleHoverNode();
+    handleHoverNode(hoverNode);
   }, [hoverNode]);
 
   return (
