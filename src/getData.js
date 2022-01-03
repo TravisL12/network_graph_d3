@@ -52,6 +52,6 @@ export const simpleData = () => {
     isRoot: true,
   };
 
-  // const { nodes, links } = generateNodes(root);
-  return { nodes: [root], links: [] };
+  const { nodes, links } = generateNodes(root);
+  return { nodes: [root, ...nodes], links };
 };

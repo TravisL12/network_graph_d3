@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import NetworkGraph from "../NetworkGraph";
-import { getColor, simpleData, generateNodes, randomizer } from "../../getData";
+import { getColor, simpleData, generateNodes } from "../../getData";
 import {
   SAppContainer,
   StyledAppInner,
@@ -9,14 +9,8 @@ import {
   SSidebarInner,
 } from "../../styles";
 import { useState } from "react";
+import { randomNode } from "../NetworkGraph/helpers";
 
-function randomNode(nodes, isParents = false) {
-  const n = isParents ? nodes.filter((n) => n.isParent) : nodes;
-  const idx = randomizer(n.length - 1);
-  return n[idx];
-}
-let rootCount = 0;
-let parentCount = 0;
 const App = () => {
   const [data, setData] = useState(simpleData());
 
@@ -44,19 +38,13 @@ const App = () => {
     setData({ ...data, links: [...data.links, ...newLinks] });
   };
 
-  const addNodes = () => {
+  const addNodes = (id) => {
     const copyNodes = [...data.nodes];
-    const root =
-      rootCount < 3 ? nodes[0] : randomNode(copyNodes, parentCount > 10);
-    rootCount += 1;
-    parentCount += 1;
+    const root = copyNodes.find((node) => (node.id || node) === id);
 
     root.isParent = true;
-
-    const { nodes: newNodes, links: newLinks } = generateNodes(
-      root,
-      getColor()
-    );
+    const color = root.isRoot ? root.color : getColor();
+    const { nodes: newNodes, links: newLinks } = generateNodes(root, color);
 
     setData({
       nodes: [...copyNodes, ...newNodes],
@@ -73,7 +61,6 @@ const App = () => {
           <SSidebarContainer>
             <SSidebarInner>
               <div>
-                <button onClick={addNodes}>Add Nodes</button>
                 <button onClick={addLinks}>Add Links</button>
               </div>
               <h3>{nodes[0]?.name}</h3>
@@ -82,16 +69,35 @@ const App = () => {
 
                 return (
                   <ul key={`parent-${id}`}>
-                    <li style={{ background: parentNode.color }}>
-                      {parentNode.name}
+                    <li
+                      style={{
+                        background: parentNode.color,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "2px 4px",
+                      }}
+                    >
+                      <div>{parentNode.name}</div>
+                      <button onClick={() => addNodes(parentNode.id)}>
+                        Add
+                      </button>
                     </li>
-                    <ul>
+                    <ul style={{ padding: "2px 6px 2px 10px" }}>
                       {children.map((child) => {
                         const sNode = findNode(child.source);
                         const cNode = findNode(child.target);
                         return (
-                          <li key={`child-${cNode.id}-${sNode.id}`}>
-                            {cNode.name}
+                          <li
+                            key={`child-${cNode.id}-${sNode.id}`}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <div>{cNode.name}</div>
+                            <button onClick={() => addNodes(cNode.id)}>
+                              Add
+                            </button>
                           </li>
                         );
                       })}
