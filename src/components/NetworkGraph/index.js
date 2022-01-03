@@ -36,6 +36,24 @@ const ALPHA_DECAY = 0.05; // speed to decay to stop
 const xMargin = 4;
 const yMargin = 0;
 
+const buildSimulation = () => {
+  return d3
+    .forceSimulation()
+    .force(
+      "link",
+      d3
+        .forceLink()
+        .id(({ id }) => id)
+        .distance(LINK_DISTANCE)
+        .strength(2)
+    )
+    .force(
+      "charge",
+      d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
+    )
+    .force("collision", d3.forceCollide(COLLISION_DISTANCE + 1).iterations(10));
+};
+
 const hoverCircleCheck = (isHovered, r) => {
   return isHovered ? r * 2 : r;
 };
@@ -104,32 +122,15 @@ function NetworkGraph({ nodes, links, nodeEvent, handleNodeEvent }) {
   }, [getNodes, nodes]);
 
   const simulation = useMemo(() => {
-    return d3
-      .forceSimulation()
-      .force(
-        "link",
-        d3
-          .forceLink()
-          .id(({ id }) => id)
-          .distance(LINK_DISTANCE)
-          .strength(2)
-      )
-      .force(
-        "charge",
-        d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
-      )
-      .force(
-        "collision",
-        d3.forceCollide(COLLISION_DISTANCE + 1).iterations(10)
-      )
-      .on("tick", ticked)
-      .on("end", () => {
-        nodes.forEach((node) => {
-          node.fx = node.x;
-          node.fy = node.y;
-        });
-        simulation.stop();
+    const sim = buildSimulation();
+    sim.on("tick", ticked).on("end", () => {
+      nodes.forEach((node) => {
+        node.fx = node.x;
+        node.fy = node.y;
       });
+      sim.stop();
+    });
+    return sim;
   }, [ticked]);
 
   const updateSimulation = useCallback(() => {

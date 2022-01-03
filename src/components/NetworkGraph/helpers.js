@@ -1,7 +1,6 @@
-// https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
-
 import { randomizer } from "../../getData";
 
+// https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
 // return `M${d.source.x},${d.source.y} L ${d.target.x},${d.target.y}`; // straight line
 export const positionLink = (d) => {
   const r = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y);
