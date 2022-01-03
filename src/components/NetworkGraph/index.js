@@ -9,6 +9,7 @@ const MAX_ZOOM = 12;
 const UPDATE_DURATION = 500;
 
 const CIRCLE_BASE_RADIUS = 8;
+const ROOT_BASE_RADIUS = CIRCLE_BASE_RADIUS * 2;
 const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
 
 const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
@@ -158,7 +159,11 @@ function NetworkGraph({ nodes, links }) {
 
           g.append("circle")
             .attr("r", (d) =>
-              d.isParent ? CIRCLE_BASE_RADIUS : CHILD_CIRCLE_BASE_RADIUS
+              d.isRoot
+                ? ROOT_BASE_RADIUS
+                : d.isParent
+                ? CIRCLE_BASE_RADIUS
+                : CHILD_CIRCLE_BASE_RADIUS
             )
             .style(
               "fill",

@@ -20,6 +20,17 @@ let parentCount = 0;
 const App = () => {
   const [data, setData] = useState(simpleData());
 
+  const { nodes, links } = data;
+  const grouped = d3.groups(links, (d) => d.source.id || d.source);
+  const nodeLookup = nodes.reduce((acc, d) => {
+    acc[d.id || d] = d;
+    return acc;
+  }, {});
+
+  const findNode = (node) => {
+    return typeof node === "number" ? nodeLookup[node] : node;
+  };
+
   const addLinks = () => {
     const newLinks = [];
     for (let i = 0; i < 5; i++) {
@@ -53,9 +64,6 @@ const App = () => {
     });
   };
 
-  const { nodes, links } = data;
-  // const grouped = d3.groups(links, (d) => d.source.id || d.source);
-
   return (
     <SAppContainer>
       <NetworkGraph nodes={nodes} links={links} />
@@ -64,23 +72,33 @@ const App = () => {
         <div style={{ overflow: "auto" }}>
           <SSidebarContainer>
             <SSidebarInner>
-              <button onClick={addNodes}>Add Nodes</button>
-              <button onClick={addLinks}>Add Links</button>
-              {/* <h3>{data.name}</h3>
-              {data.children.map((child) => {
+              <div>
+                <button onClick={addNodes}>Add Nodes</button>
+                <button onClick={addLinks}>Add Links</button>
+              </div>
+              <h3>{nodes[0]?.name}</h3>
+              {grouped.map(([id, children]) => {
+                const parentNode = findNode(id);
+
                 return (
-                  <ul key={`parent-${child.id}`}>
-                    <li style={{ background: child.color }}>{child.name}</li>
-                    {child.children && (
-                      <ul>
-                        {child.children.map((child2, idx) => {
-                          return <li key={`child-${idx}`}>{child2.name}</li>;
-                        })}
-                      </ul>
-                    )}
+                  <ul key={`parent-${id}`}>
+                    <li style={{ background: parentNode.color }}>
+                      {parentNode.name}
+                    </li>
+                    <ul>
+                      {children.map((child) => {
+                        const sNode = findNode(child.source);
+                        const cNode = findNode(child.target);
+                        return (
+                          <li key={`child-${cNode.id}-${sNode.id}`}>
+                            {cNode.name}
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </ul>
                 );
-              })} */}
+              })}
             </SSidebarInner>
           </SSidebarContainer>
         </div>
