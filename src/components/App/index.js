@@ -7,12 +7,17 @@ import {
   SHeader,
   SSidebarContainer,
   SSidebarInner,
+  StyledAddButton,
+  SChildList,
+  SChildListItem,
+  SParentListItem,
 } from "../../styles";
 import { useState } from "react";
 import { randomNode } from "../NetworkGraph/helpers";
 
 const App = () => {
   const [data, setData] = useState(simpleData());
+  const [hoverId, setHoverId] = useState(null);
 
   const { nodes, links } = data;
   const grouped = d3.groups(links, (d) => d.source.id || d.source);
@@ -42,9 +47,15 @@ const App = () => {
     const copyNodes = [...data.nodes];
     const root = copyNodes.find((node) => (node.id || node) === id);
 
+    if (!root.isParent) {
+      root.color = getColor();
+    }
+
     root.isParent = true;
-    const color = root.isRoot ? root.color : getColor();
-    const { nodes: newNodes, links: newLinks } = generateNodes(root, color);
+    const { nodes: newNodes, links: newLinks } = generateNodes(
+      root,
+      root.color
+    );
 
     setData({
       nodes: [...copyNodes, ...newNodes],
@@ -52,16 +63,21 @@ const App = () => {
     });
   };
 
+  const mouseOver = (nodeId) => {
+    const node = findNode(nodeId);
+    setHoverId(node);
+  };
+
   return (
     <SAppContainer>
-      <NetworkGraph nodes={nodes} links={links} />
+      <NetworkGraph nodes={nodes} links={links} hoverNode={hoverId} />
       <StyledAppInner>
         <SHeader />
         <div style={{ overflow: "auto" }}>
           <SSidebarContainer>
             <SSidebarInner>
               <div>
-                <button onClick={addLinks}>Add Links</button>
+                <StyledAddButton onClick={addLinks}>Add Links</StyledAddButton>
               </div>
               <h3>{nodes[0]?.name}</h3>
               {grouped.map(([id, children]) => {
@@ -69,39 +85,36 @@ const App = () => {
 
                 return (
                   <ul key={`parent-${id}`}>
-                    <li
+                    <SParentListItem
+                      onMouseOver={() => mouseOver(id)}
+                      onMouseOut={() => setHoverId(null)}
                       style={{
                         background: parentNode.color,
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "2px 4px",
                       }}
                     >
                       <div>{parentNode.name}</div>
-                      <button onClick={() => addNodes(parentNode.id)}>
+                      <StyledAddButton onClick={() => addNodes(parentNode.id)}>
                         Add
-                      </button>
-                    </li>
-                    <ul style={{ padding: "2px 6px 2px 10px" }}>
+                      </StyledAddButton>
+                    </SParentListItem>
+                    <SChildList>
                       {children.map((child) => {
                         const sNode = findNode(child.source);
                         const cNode = findNode(child.target);
                         return (
-                          <li
+                          <SChildListItem
                             key={`child-${cNode.id}-${sNode.id}`}
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                            }}
+                            onMouseOver={() => mouseOver(cNode.id)}
+                            onMouseOut={() => setHoverId(null)}
                           >
                             <div>{cNode.name}</div>
-                            <button onClick={() => addNodes(cNode.id)}>
+                            <StyledAddButton onClick={() => addNodes(cNode.id)}>
                               Add
-                            </button>
-                          </li>
+                            </StyledAddButton>
+                          </SChildListItem>
                         );
                       })}
-                    </ul>
+                    </SChildList>
                   </ul>
                 );
               })}

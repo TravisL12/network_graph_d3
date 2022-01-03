@@ -66,3 +66,40 @@ export const StyledSVGContainer = styled.div`
   vertical-align: top;
   overflow: hidden;
 `;
+
+export const StyledAddButton = styled.button`
+  padding: 0;
+  background: none;
+  text-decoration: underline;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: #4f4f4f;
+  }
+`;
+
+export const SChildList = styled.ul`
+  padding: 0;
+`;
+
+const SListItem = styled.li`
+  display: flex;
+  justify-content: space-between;
+`;
+
+export const SParentListItem = styled(SListItem)`
+  padding: 2px 4px;
+
+  &:hover {
+    filter: saturate(0.8);
+  }
+`;
+
+export const SChildListItem = styled(SListItem)`
+  padding: 2px 6px 2px 10px;
+
+  &:hover {
+    background: lightgray;
+  }
+`;
