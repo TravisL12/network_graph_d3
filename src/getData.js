@@ -13,6 +13,12 @@ const lorem = new LoremIpsum({
   },
 });
 
+function weightRandomizer() {
+  const weighting = [1, 1, 1, 1, 1, 8, 8, 8, 8, 8, 15, 15, 15, 30];
+  const idx = randomizer(weighting.length - 1);
+  return weighting[idx];
+}
+
 export function randomizer(max = 1, min = 0) {
   return Math.round(Math.random() * (max - min) + min);
 }
@@ -24,7 +30,7 @@ export const getColor = () => {
 export const generateNodes = (root, color) => {
   const nodes = [];
   const links = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     const id = randomizer(1000, 1);
     const node = {
       id,
@@ -32,13 +38,15 @@ export const generateNodes = (root, color) => {
       color: color || root.color,
     };
 
-    if (root.x && root.y) {
-      node.x = root.x;
-      node.y = root.y;
-    }
+    node.x = root.x || randomizer(800, 250); // random node spawn position
+    node.y = root.y || randomizer(800, 250); // random node spawn position
 
     nodes.push(node);
-    links.push({ target: node.id, source: root.id });
+    links.push({
+      target: node.id,
+      source: root.id,
+      weight: weightRandomizer(),
+    });
   }
   return { nodes, links };
 };
