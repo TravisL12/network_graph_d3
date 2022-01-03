@@ -27,7 +27,6 @@ const ALPHA_DECAY = 0.1; // speed to decay to stop
 
 const xMargin = 4;
 const yMargin = 0;
-let transform = d3.zoomIdentity;
 
 const hoverCircleCheck = (isHovered, r) => {
   return isHovered ? r * 2 : r;
@@ -43,6 +42,21 @@ const getNodeRadius = (d) => {
 
 function NetworkGraph({ nodes, links, hoverNode }) {
   const graphRef = useRef();
+  const zoom = d3
+    .zoom()
+    .scaleExtent([MIN_ZOOM, MAX_ZOOM])
+    .on("zoom", (event) => {
+      const { link, node } = getNodes();
+      node.attr("transform", event.transform);
+      link.attr("transform", event.transform);
+
+      // hide text when zoomed way out
+      // if (transform.k < 0.9) {
+      //   node.selectAll(".child-node").style("display", "none");
+      // } else {
+      //   node.selectAll(".node-text").style("display", "block");
+      // }
+    });
 
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
@@ -53,25 +67,10 @@ function NetworkGraph({ nodes, links, hoverNode }) {
   }, []);
 
   const enableZoom = useCallback(() => {
-    const { link, node, zoomRect } = getNodes();
+    const { zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
-
-    const zoomed = (event) => {
-      transform = event.transform;
-      node.attr("transform", event.transform);
-      link.attr("transform", event.transform);
-
-      // hide text when zoomed way out
-      // if (transform.k < 0.9) {
-      //   node.selectAll(".child-node").style("display", "none");
-      // } else {
-      //   node.selectAll(".node-text").style("display", "block");
-      // }
-    };
-
-    const zoom = d3.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]).on("zoom", zoomed);
     zoomRect.call(zoom).call(zoom.translateTo, width / 2, height / 2);
-  }, [getNodes]);
+  }, []);
 
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
@@ -190,6 +189,21 @@ function NetworkGraph({ nodes, links, hoverNode }) {
     [getNodes, links]
   );
 
+  const handleNodeClickZoom = (event) => {
+    const { zoomRect } = getNodes();
+    const d = d3.select(event.target.parentNode).data();
+    const { x, y } = d[0];
+
+    zoomRect
+      .call(zoom)
+      .transition()
+      .duration(200)
+      .call(zoom.translateTo, x, y)
+      .transition()
+      .duration(500)
+      .call(zoom.scaleTo, 4);
+  };
+
   const handleMouseOver = useCallback(
     (event) => {
       const d = d3.select(event.target.parentNode).data();
@@ -243,6 +257,7 @@ function NetworkGraph({ nodes, links, hoverNode }) {
               "fill",
               (d) => d.color || d3.color(d.parent.color).brighter(1.6)
             )
+            .on("click", handleNodeClickZoom)
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
 
@@ -252,6 +267,7 @@ function NetworkGraph({ nodes, links, hoverNode }) {
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
             )
+            .on("click", handleNodeClickZoom)
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
 
