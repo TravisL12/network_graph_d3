@@ -4,8 +4,12 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
 
+export const HOVER = "hover";
+export const CLICK = "click";
+
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
+const CLICK_ZOOM_LEVEL = 3;
 const UPDATE_DURATION = 500;
 
 const CIRCLE_BASE_RADIUS = 8;
@@ -40,7 +44,7 @@ const getNodeRadius = (d) => {
     : CHILD_CIRCLE_BASE_RADIUS;
 };
 
-function NetworkGraph({ nodes, links, hoverNode }) {
+function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
   const graphRef = useRef();
   const zoom = d3
     .zoom()
@@ -129,7 +133,7 @@ function NetworkGraph({ nodes, links, hoverNode }) {
 
     simulation.nodes(nodes);
     simulation.force("link").links(links);
-    simulation.force("radial", d3.forceRadial(500, width / 2, height / 2));
+    simulation.force("radial", d3.forceRadial(1000, width / 2, height / 2));
     simulation
       .alphaDecay(ALPHA_DECAY)
       .alphaMin(ALPHA_MIN)
@@ -189,11 +193,8 @@ function NetworkGraph({ nodes, links, hoverNode }) {
     [getNodes, links]
   );
 
-  const handleNodeClickZoom = (event) => {
+  const zoomTo = (x, y) => {
     const { zoomRect } = getNodes();
-    const d = d3.select(event.target.parentNode).data();
-    const { x, y } = d[0];
-
     zoomRect
       .call(zoom)
       .transition()
@@ -201,7 +202,12 @@ function NetworkGraph({ nodes, links, hoverNode }) {
       .call(zoom.translateTo, x, y)
       .transition()
       .duration(500)
-      .call(zoom.scaleTo, 4);
+      .call(zoom.scaleTo, CLICK_ZOOM_LEVEL);
+  };
+
+  const handleNodeClickZoom = (event) => {
+    const { x, y } = d3.select(event.target.parentNode).data()[0];
+    zoomTo(x, y);
   };
 
   const handleMouseOver = useCallback(
@@ -355,10 +361,16 @@ function NetworkGraph({ nodes, links, hoverNode }) {
   }, [draw, enableZoom]);
 
   useEffect(() => {
-    if (hoverNode) {
+    if (hoverNode?.node) {
       simulation.stop();
     }
-    handleHoverNode(hoverNode);
+    if (hoverNode?.type === HOVER) {
+      handleHoverNode(hoverNode.node);
+    }
+    if (hoverNode?.type === CLICK) {
+      const { x, y } = hoverNode.node;
+      zoomTo(x, y);
+    }
   }, [hoverNode]);
 
   return (

@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import NetworkGraph from "../NetworkGraph";
+import NetworkGraph, { CLICK, HOVER } from "../NetworkGraph";
 import { getColor, simpleData, generateNodes } from "../../getData";
 import {
   SAppContainer,
@@ -63,9 +63,9 @@ const App = () => {
     });
   };
 
-  const mouseOver = (nodeId) => {
+  const mouseEvent = (nodeId, type) => {
     const node = findNode(nodeId);
-    setHoverId(node);
+    setHoverId({ type, node });
   };
 
   return (
@@ -86,13 +86,15 @@ const App = () => {
                 return (
                   <ul key={`parent-${id}`}>
                     <SParentListItem
-                      onMouseOver={() => mouseOver(id)}
+                      onMouseOver={() => mouseEvent(id, HOVER)}
                       onMouseOut={() => setHoverId(null)}
                       style={{
                         background: parentNode.color,
                       }}
                     >
-                      <div>{parentNode.name}</div>
+                      <StyledAddButton onClick={() => mouseEvent(id, CLICK)}>
+                        {parentNode.name}
+                      </StyledAddButton>
                       <StyledAddButton onClick={() => addNodes(parentNode.id)}>
                         Add
                       </StyledAddButton>
@@ -104,10 +106,14 @@ const App = () => {
                         return (
                           <SChildListItem
                             key={`child-${cNode.id}-${sNode.id}`}
-                            onMouseOver={() => mouseOver(cNode.id)}
+                            onMouseOver={() => mouseEvent(cNode.id, HOVER)}
                             onMouseOut={() => setHoverId(null)}
                           >
-                            <div>{cNode.name}</div>
+                            <StyledAddButton
+                              onClick={() => mouseEvent(cNode.id, CLICK)}
+                            >
+                              {cNode.name}
+                            </StyledAddButton>
                             <StyledAddButton onClick={() => addNodes(cNode.id)}>
                               Add
                             </StyledAddButton>
