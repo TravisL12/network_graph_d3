@@ -1,6 +1,11 @@
 import * as d3 from "d3";
 import NetworkGraph, { CLICK, HOVER } from "../NetworkGraph";
-import { getColor, simpleData, generateNodes } from "../../getData";
+import {
+  getColor,
+  simpleData,
+  generateNodes,
+  weightRandomizer,
+} from "../../getData";
 import {
   SAppContainer,
   StyledAppInner,
@@ -17,7 +22,7 @@ import { randomNode } from "../NetworkGraph/helpers";
 
 const App = () => {
   const [data, setData] = useState(simpleData());
-  const [hoverId, setHoverId] = useState(null);
+  const [nodeEvent, setNodeEvent] = useState(null);
 
   const { nodes, links } = data;
   const grouped = d3.groups(links, (d) => d.source.id || d.source);
@@ -38,6 +43,8 @@ const App = () => {
       newLinks.push({
         source: source.id || source,
         target: target.id || target,
+        color: source.color,
+        weight: weightRandomizer(),
       });
     }
     setData({ ...data, links: [...data.links, ...newLinks] });
@@ -65,12 +72,17 @@ const App = () => {
 
   const mouseEvent = (nodeId, type) => {
     const node = findNode(nodeId);
-    setHoverId({ type, node });
+    setNodeEvent({ type, node });
   };
 
   return (
     <SAppContainer>
-      <NetworkGraph nodes={nodes} links={links} hoverNode={hoverId} />
+      <NetworkGraph
+        nodes={nodes}
+        links={links}
+        nodeEvent={nodeEvent}
+        handleNodeEvent={mouseEvent}
+      />
       <StyledAppInner>
         <SHeader />
         <div style={{ overflow: "auto" }}>
@@ -82,12 +94,13 @@ const App = () => {
               <h3>{nodes[0]?.name}</h3>
               {grouped.map(([id, children]) => {
                 const parentNode = findNode(id);
+                if (!parentNode.isParent) return null;
 
                 return (
                   <ul key={`parent-${id}`}>
                     <SParentListItem
                       onMouseOver={() => mouseEvent(id, HOVER)}
-                      onMouseOut={() => setHoverId(null)}
+                      onMouseOut={() => mouseEvent(null, HOVER)}
                       style={{
                         background: parentNode.color,
                       }}
@@ -107,16 +120,20 @@ const App = () => {
                           <SChildListItem
                             key={`child-${cNode.id}-${sNode.id}`}
                             onMouseOver={() => mouseEvent(cNode.id, HOVER)}
-                            onMouseOut={() => setHoverId(null)}
+                            onMouseOut={() => mouseEvent(null, HOVER)}
                           >
                             <StyledAddButton
                               onClick={() => mouseEvent(cNode.id, CLICK)}
                             >
                               {cNode.name}
                             </StyledAddButton>
-                            <StyledAddButton onClick={() => addNodes(cNode.id)}>
-                              Add
-                            </StyledAddButton>
+                            {!cNode.isParent && (
+                              <StyledAddButton
+                                onClick={() => addNodes(cNode.id)}
+                              >
+                                Add
+                              </StyledAddButton>
+                            )}
                           </SChildListItem>
                         );
                       })}

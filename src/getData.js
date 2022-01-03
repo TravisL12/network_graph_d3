@@ -13,7 +13,7 @@ const lorem = new LoremIpsum({
   },
 });
 
-function weightRandomizer() {
+export function weightRandomizer() {
   const weighting = [1, 1, 1, 1, 1, 8, 8, 8, 8, 8, 15, 15, 15, 30];
   const idx = randomizer(weighting.length - 1);
   return weighting[idx];
@@ -45,6 +45,7 @@ export const generateNodes = (root, color) => {
     links.push({
       target: node.id,
       source: root.id,
+      color: root.color,
       weight: weightRandomizer(),
     });
   }

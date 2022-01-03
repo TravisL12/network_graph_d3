@@ -18,6 +18,10 @@ const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (7 / 8);
 
 const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
 const STROKE_COLOR = "#177E89";
+const WIDE_STROKE_WIDTH = "4px";
+const REGULAR_STROKE_WIDTH = "2px";
+const strokeColor = (d) => d3.color(d.color).darker(1);
+const darkStrokeColor = (d) => d3.color(d.color).darker(1.5);
 
 const LINK_STROKE_WIDTH = 0.25;
 const LINK_DISTANCE = 200;
@@ -27,7 +31,7 @@ const ARM_MAX_DISTANCE = 200;
 
 const ALPHA_MIN = 0.1; // stop speed
 const ALPHA = 0.5; // start speed
-const ALPHA_DECAY = 0.1; // speed to decay to stop
+const ALPHA_DECAY = 0.05; // speed to decay to stop
 
 const xMargin = 4;
 const yMargin = 0;
@@ -44,7 +48,7 @@ const getNodeRadius = (d) => {
     : CHILD_CIRCLE_BASE_RADIUS;
 };
 
-function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
+function NetworkGraph({ nodes, links, nodeEvent, handleNodeEvent }) {
   const graphRef = useRef();
   const zoom = d3
     .zoom()
@@ -53,13 +57,6 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
       const { link, node } = getNodes();
       node.attr("transform", event.transform);
       link.attr("transform", event.transform);
-
-      // hide text when zoomed way out
-      // if (transform.k < 0.9) {
-      //   node.selectAll(".child-node").style("display", "none");
-      // } else {
-      //   node.selectAll(".node-text").style("display", "block");
-      // }
     });
 
   const getNodes = useCallback(() => {
@@ -125,7 +122,14 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
         "collision",
         d3.forceCollide(COLLISION_DISTANCE + 1).iterations(10)
       )
-      .on("tick", ticked);
+      .on("tick", ticked)
+      .on("end", () => {
+        nodes.forEach((node) => {
+          node.fx = node.x;
+          node.fy = node.y;
+        });
+        simulation.stop();
+      });
   }, [ticked]);
 
   const updateSimulation = useCallback(() => {
@@ -133,7 +137,9 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
 
     simulation.nodes(nodes);
     simulation.force("link").links(links);
-    simulation.force("radial", d3.forceRadial(1000, width / 2, height / 2));
+    if (!simulation.force("radial")) {
+      simulation.force("radial", d3.forceRadial(1000, width / 2, height / 2));
+    }
     simulation
       .alphaDecay(ALPHA_DECAY)
       .alphaMin(ALPHA_MIN)
@@ -143,9 +149,10 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
 
   const handleHoverNode = useCallback(
     (selectedNode) => {
-      const { node } = getNodes();
+      const { node, link } = getNodes();
       const hoverDuration = 250;
 
+      const linkSelection = link.transition().duration(hoverDuration);
       const circleSelection = node
         .select(".node circle")
         .transition()
@@ -161,6 +168,11 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
           .filter((link) => link.source.id === selectedNode.id)
           .map(({ target }) => target.id);
 
+        linkSelection.attr("stroke", (d) => {
+          return [selectedNode.id, ...childIds].includes(d.source.id)
+            ? darkStrokeColor(d)
+            : strokeColor(d);
+        });
         circleSelection
           .attr("r", (d) => {
             return hoverCircleCheck(
@@ -169,25 +181,35 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
             );
           })
           .attr("stroke", (d) =>
-            [selectedNode.id, ...childIds].includes(d.id) ? "black" : "none"
+            [selectedNode.id, ...childIds].includes(d.id)
+              ? darkStrokeColor(d)
+              : strokeColor(d)
           )
           .attr("stroke-width", (d) =>
-            [selectedNode.id, ...childIds].includes(d.id) ? "4px" : 0
+            [selectedNode.id, ...childIds].includes(d.id)
+              ? WIDE_STROKE_WIDTH
+              : REGULAR_STROKE_WIDTH
           );
 
-        textSelection.style("opacity", (d) => {
-          return [selectedNode.id, ...childIds].includes(d.id) ? "100" : "0";
-        });
+        textSelection.style("opacity", (d) =>
+          [selectedNode.id, ...childIds].includes(d.id) ? 100 : 0
+        );
       } else {
+        // resets all nodes if not a parent (or if no node selected)
         circleSelection
           .attr("r", (d) =>
             hoverCircleCheck(d.id === selectedNode?.id, getNodeRadius(d))
           )
-          .attr("stroke", (d) => (d.id === selectedNode?.id ? "black" : "none"))
-          .attr("stroke-width", (d) => (d.id === selectedNode?.id ? "4px" : 0));
-        textSelection.style("opacity", (d) => {
-          return d.id === selectedNode?.id ? "100" : "0";
-        });
+          .attr("stroke", (d) =>
+            d.id === selectedNode?.id ? darkStrokeColor(d) : strokeColor(d)
+          )
+          .attr("stroke-width", (d) =>
+            d.id === selectedNode?.id ? WIDE_STROKE_WIDTH : REGULAR_STROKE_WIDTH
+          );
+        textSelection.style("opacity", (d) =>
+          d.id === selectedNode?.id ? 100 : 0
+        );
+        linkSelection.attr("stroke", (d) => d.color);
       }
     },
     [getNodes, links]
@@ -213,14 +235,14 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
   const handleMouseOver = useCallback(
     (event) => {
       const d = d3.select(event.target.parentNode).data();
-      handleHoverNode(d[0]);
+      handleNodeEvent(d[0].id, HOVER);
     },
     [handleHoverNode]
   );
 
   const handleMouseOut = useCallback(() => {
     handleHoverNode(null);
-  }, []);
+  }, [handleHoverNode]);
 
   const draw = useCallback(() => {
     const { node, link } = getNodes();
@@ -240,7 +262,7 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
           .call((e) => {
             e.transition()
               .duration(UPDATE_DURATION * 3)
-              .attr("stroke", STROKE_COLOR)
+              .attr("stroke", (d) => d3.color(d.color).darker(1))
               .style(
                 "stroke-width",
                 (d) => `${d.weight * LINK_STROKE_WIDTH}px`
@@ -263,13 +285,15 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
               "fill",
               (d) => d.color || d3.color(d.parent.color).brighter(1.6)
             )
+            .attr("stroke", (d) => d3.color(d.color).darker(1))
+            .attr("stroke-width", REGULAR_STROKE_WIDTH)
             .on("dblclick", handleNodeClickZoom)
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
 
           const gText = g
             .append("g")
-            .style("opacity", "0")
+            .style("opacity", 0)
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
             )
@@ -361,17 +385,14 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
   }, [draw, enableZoom]);
 
   useEffect(() => {
-    if (hoverNode?.node) {
-      simulation.stop();
+    if (nodeEvent?.type === HOVER) {
+      handleHoverNode(nodeEvent.node);
     }
-    if (hoverNode?.type === HOVER) {
-      handleHoverNode(hoverNode.node);
-    }
-    if (hoverNode?.type === CLICK) {
-      const { x, y } = hoverNode.node;
+    if (nodeEvent?.type === CLICK) {
+      const { x, y } = nodeEvent.node;
       zoomTo(x, y);
     }
-  }, [hoverNode]);
+  }, [nodeEvent]);
 
   return (
     <StyledSVGContainer>
