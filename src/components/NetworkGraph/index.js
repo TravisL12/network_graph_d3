@@ -4,13 +4,17 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { positionLink, getHeightWidth } from "./helpers";
 import { StyledSVGContainer } from "../../styles";
 
+export const HOVER = "hover";
+export const CLICK = "click";
+
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 12;
+const CLICK_ZOOM_LEVEL = 3;
 const UPDATE_DURATION = 500;
 
 const CIRCLE_BASE_RADIUS = 8;
 const ROOT_BASE_RADIUS = CIRCLE_BASE_RADIUS * 2;
-const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
+const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (7 / 8);
 
 const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
 const STROKE_COLOR = "#177E89";
@@ -27,10 +31,36 @@ const ALPHA_DECAY = 0.1; // speed to decay to stop
 
 const xMargin = 4;
 const yMargin = 0;
-let transform = d3.zoomIdentity;
 
-function NetworkGraph({ nodes, links }) {
+const hoverCircleCheck = (isHovered, r) => {
+  return isHovered ? r * 2 : r;
+};
+
+const getNodeRadius = (d) => {
+  return d.isRoot
+    ? ROOT_BASE_RADIUS
+    : d.isParent
+    ? CIRCLE_BASE_RADIUS
+    : CHILD_CIRCLE_BASE_RADIUS;
+};
+
+function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
   const graphRef = useRef();
+  const zoom = d3
+    .zoom()
+    .scaleExtent([MIN_ZOOM, MAX_ZOOM])
+    .on("zoom", (event) => {
+      const { link, node } = getNodes();
+      node.attr("transform", event.transform);
+      link.attr("transform", event.transform);
+
+      // hide text when zoomed way out
+      // if (transform.k < 0.9) {
+      //   node.selectAll(".child-node").style("display", "none");
+      // } else {
+      //   node.selectAll(".node-text").style("display", "block");
+      // }
+    });
 
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
@@ -38,6 +68,12 @@ function NetworkGraph({ nodes, links }) {
     const link = svg.selectAll(".lines").selectAll(".line");
     const node = svg.selectAll(".nodes").selectAll(".node");
     return { svg, link, node, zoomRect };
+  }, []);
+
+  const enableZoom = useCallback(() => {
+    const { zoomRect } = getNodes();
+    const { width, height } = getHeightWidth();
+    zoomRect.call(zoom).call(zoom.translateTo, width / 2, height / 2);
   }, []);
 
   const ticked = useCallback(() => {
@@ -92,47 +128,108 @@ function NetworkGraph({ nodes, links }) {
       .on("tick", ticked);
   }, [ticked]);
 
-  const updateSimulation = () => {
+  const updateSimulation = useCallback(() => {
     const { width, height } = getHeightWidth();
 
     simulation.nodes(nodes);
     simulation.force("link").links(links);
-    simulation.force("radial", d3.forceRadial(500, width / 2, height / 2));
+    simulation.force("radial", d3.forceRadial(1000, width / 2, height / 2));
     simulation
       .alphaDecay(ALPHA_DECAY)
       .alphaMin(ALPHA_MIN)
       .alpha(ALPHA)
       .restart();
+  }, [nodes, links, simulation]);
+
+  const handleHoverNode = useCallback(
+    (selectedNode) => {
+      const { node } = getNodes();
+      const hoverDuration = 250;
+
+      const circleSelection = node
+        .select(".node circle")
+        .transition()
+        .duration(hoverDuration);
+
+      const textSelection = node
+        .select(".node-text")
+        .transition()
+        .duration(hoverDuration);
+
+      if (selectedNode?.isParent) {
+        const childIds = links
+          .filter((link) => link.source.id === selectedNode.id)
+          .map(({ target }) => target.id);
+
+        circleSelection
+          .attr("r", (d) => {
+            return hoverCircleCheck(
+              [selectedNode.id, ...childIds].includes(d.id),
+              getNodeRadius(d)
+            );
+          })
+          .attr("stroke", (d) =>
+            [selectedNode.id, ...childIds].includes(d.id) ? "black" : "none"
+          )
+          .attr("stroke-width", (d) =>
+            [selectedNode.id, ...childIds].includes(d.id) ? "4px" : 0
+          );
+
+        textSelection.style("opacity", (d) => {
+          return [selectedNode.id, ...childIds].includes(d.id) ? "100" : "0";
+        });
+      } else {
+        circleSelection
+          .attr("r", (d) =>
+            hoverCircleCheck(d.id === selectedNode?.id, getNodeRadius(d))
+          )
+          .attr("stroke", (d) => (d.id === selectedNode?.id ? "black" : "none"))
+          .attr("stroke-width", (d) => (d.id === selectedNode?.id ? "4px" : 0));
+        textSelection.style("opacity", (d) => {
+          return d.id === selectedNode?.id ? "100" : "0";
+        });
+      }
+    },
+    [getNodes, links]
+  );
+
+  const zoomTo = (x, y) => {
+    const { zoomRect } = getNodes();
+    zoomRect
+      .call(zoom)
+      .transition()
+      .duration(200)
+      .call(zoom.translateTo, x, y)
+      .transition()
+      .duration(500)
+      .call(zoom.scaleTo, CLICK_ZOOM_LEVEL);
   };
 
-  const enableZoom = useCallback(() => {
-    const { link, node, zoomRect } = getNodes();
-    const { width, height } = getHeightWidth();
+  const handleNodeClickZoom = (event) => {
+    const { x, y } = d3.select(event.target.parentNode).data()[0];
+    zoomTo(x, y);
+  };
 
-    const zoomed = (event) => {
-      transform = event.transform;
-      node.attr("transform", event.transform);
-      link.attr("transform", event.transform);
+  const handleMouseOver = useCallback(
+    (event) => {
+      const d = d3.select(event.target.parentNode).data();
+      handleHoverNode(d[0]);
+    },
+    [handleHoverNode]
+  );
 
-      // hide text when zoomed way out
-      if (transform.k < 0.9) {
-        node.selectAll(".child-node").style("display", "none");
-      } else {
-        node.selectAll(".node-text").style("display", "block");
-      }
-    };
-
-    const zoom = d3.zoom().scaleExtent([MIN_ZOOM, MAX_ZOOM]).on("zoom", zoomed);
-    zoomRect.call(zoom).call(zoom.translateTo, width / 2, height / 2);
-  }, [getNodes]);
+  const handleMouseOut = useCallback(() => {
+    handleHoverNode(null);
+  }, []);
 
   const draw = useCallback(() => {
     const { node, link } = getNodes();
-    simulation.stop();
+
     link
-      .data(links, (d) => {
-        return `${d.source.id || d.source}-${d.target.id || d.target}`;
-      })
+      .data(
+        links,
+        (d) => `${d.source.id || d.source}-${d.target.id || d.target}`
+      )
       .join((enter) => {
         const path = enter
           .append("path")
@@ -144,7 +241,10 @@ function NetworkGraph({ nodes, links }) {
             e.transition()
               .duration(UPDATE_DURATION * 3)
               .attr("stroke", STROKE_COLOR)
-              .style("stroke-width", `${LINK_STROKE_WIDTH}px`);
+              .style(
+                "stroke-width",
+                (d) => `${d.weight * LINK_STROKE_WIDTH}px`
+              );
           });
         return path;
       });
@@ -158,23 +258,24 @@ function NetworkGraph({ nodes, links }) {
           const g = enter.append("g").attr("class", "node");
 
           g.append("circle")
-            .attr("r", (d) =>
-              d.isRoot
-                ? ROOT_BASE_RADIUS
-                : d.isParent
-                ? CIRCLE_BASE_RADIUS
-                : CHILD_CIRCLE_BASE_RADIUS
-            )
+            .attr("r", (d) => getNodeRadius(d))
             .style(
               "fill",
               (d) => d.color || d3.color(d.parent.color).brighter(1.6)
-            );
+            )
+            .on("dblclick", handleNodeClickZoom)
+            .on("mouseover", handleMouseOver)
+            .on("mouseout", handleMouseOut);
 
           const gText = g
             .append("g")
+            .style("opacity", "0")
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
-            );
+            )
+            .on("dblclick", handleNodeClickZoom)
+            .on("mouseover", handleMouseOver)
+            .on("mouseout", handleMouseOut);
 
           gText
             .append("text")
@@ -184,7 +285,6 @@ function NetworkGraph({ nodes, links }) {
             .each(function (d) {
               d.bbox = this.getBBox();
             });
-
           gText.selectAll("text").remove();
 
           gText
@@ -222,14 +322,24 @@ function NetworkGraph({ nodes, links }) {
               d.isParent ? "node-text parent-node" : "node-text child-node"
             );
 
-          update.select(".node circle").call(callUpdate);
+          update
+            .select(".node circle")
+            .style("fill", (d) => d.color)
+            .call(callUpdate);
           update.select(".node .node-text rect").call(callUpdate);
           update.select(".node .node-text text").call(callUpdate);
         }
       );
 
     updateSimulation();
-  }, [links, nodes, getNodes, simulation]);
+  }, [
+    links,
+    nodes,
+    getNodes,
+    handleMouseOut,
+    handleMouseOver,
+    updateSimulation,
+  ]);
 
   const updateViewportDimensions = useCallback(() => {
     const { svg, zoomRect } = getNodes();
@@ -249,6 +359,19 @@ function NetworkGraph({ nodes, links }) {
     draw();
     enableZoom();
   }, [draw, enableZoom]);
+
+  useEffect(() => {
+    if (hoverNode?.node) {
+      simulation.stop();
+    }
+    if (hoverNode?.type === HOVER) {
+      handleHoverNode(hoverNode.node);
+    }
+    if (hoverNode?.type === CLICK) {
+      const { x, y } = hoverNode.node;
+      zoomTo(x, y);
+    }
+  }, [hoverNode]);
 
   return (
     <StyledSVGContainer>
