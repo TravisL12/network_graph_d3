@@ -14,7 +14,7 @@ const UPDATE_DURATION = 500;
 
 const CIRCLE_BASE_RADIUS = 8;
 const ROOT_BASE_RADIUS = CIRCLE_BASE_RADIUS * 2;
-const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 6);
+const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (7 / 8);
 
 const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
 const STROKE_COLOR = "#177E89";
@@ -263,7 +263,7 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
               "fill",
               (d) => d.color || d3.color(d.parent.color).brighter(1.6)
             )
-            .on("click", handleNodeClickZoom)
+            .on("dblclick", handleNodeClickZoom)
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
 
@@ -273,7 +273,7 @@ function NetworkGraph({ nodes, links, hoverNode, clickNode }) {
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
             )
-            .on("click", handleNodeClickZoom)
+            .on("dblclick", handleNodeClickZoom)
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
 
