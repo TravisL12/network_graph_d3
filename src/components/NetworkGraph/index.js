@@ -1,54 +1,40 @@
 import * as d3 from "d3";
 import { throttle } from "lodash";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { positionLink, getHeightWidth } from "./helpers";
+
 import { StyledSVGContainer } from "../../styles";
+import {
+  positionLink,
+  getHeightWidth,
+  buildSimulation,
+  hoverCircleCheck,
+  getNodeRadius,
+} from "./helpers";
+import {
+  HOVER,
+  HOVER_DURATION,
+  ZOOM_DURATION,
+  CLICK,
+  TEXT_BG_OPACITY,
+  MIN_ZOOM,
+  MAX_ZOOM,
+  CLICK_ZOOM_LEVEL,
+  UPDATE_DURATION,
+  CIRCLE_BASE_RADIUS,
+  STROKE_COLOR,
+  WIDE_STROKE_WIDTH,
+  REGULAR_STROKE_WIDTH,
+  strokeColor,
+  darkStrokeColor,
+  LINK_STROKE_WIDTH,
+  ALPHA_MIN,
+  ALPHA,
+  ALPHA_DECAY,
+  xMargin,
+  yMargin,
+} from "../../constants";
 
-export const HOVER = "hover";
-export const CLICK = "click";
-
-const MIN_ZOOM = 0.25;
-const MAX_ZOOM = 12;
-const CLICK_ZOOM_LEVEL = 3;
-const UPDATE_DURATION = 500;
-
-const CIRCLE_BASE_RADIUS = 8;
-const ROOT_BASE_RADIUS = CIRCLE_BASE_RADIUS * 2;
-const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (7 / 8);
-
-const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
-const STROKE_COLOR = "#177E89";
-const WIDE_STROKE_WIDTH = "4px";
-const REGULAR_STROKE_WIDTH = "2px";
-const strokeColor = (d) => d3.color(d.color).darker(1);
-const darkStrokeColor = (d) => d3.color(d.color).darker(1.5);
-
-const LINK_STROKE_WIDTH = 0.25;
-const LINK_DISTANCE = 200;
-
-const ARM_STRENGTH = 50;
-const ARM_MAX_DISTANCE = 200;
-
-const ALPHA_MIN = 0.1; // stop speed
-const ALPHA = 0.5; // start speed
-const ALPHA_DECAY = 0.05; // speed to decay to stop
-
-const xMargin = 4;
-const yMargin = 0;
-
-const hoverCircleCheck = (isHovered, r) => {
-  return isHovered ? r * 2 : r;
-};
-
-const getNodeRadius = (d) => {
-  return d.isRoot
-    ? ROOT_BASE_RADIUS
-    : d.isParent
-    ? CIRCLE_BASE_RADIUS
-    : CHILD_CIRCLE_BASE_RADIUS;
-};
-
-function NetworkGraph({ nodes, links, nodeEvent, handleNodeEvent }) {
+const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   const graphRef = useRef();
   const zoom = d3
     .zoom()
@@ -104,32 +90,15 @@ function NetworkGraph({ nodes, links, nodeEvent, handleNodeEvent }) {
   }, [getNodes, nodes]);
 
   const simulation = useMemo(() => {
-    return d3
-      .forceSimulation()
-      .force(
-        "link",
-        d3
-          .forceLink()
-          .id(({ id }) => id)
-          .distance(LINK_DISTANCE)
-          .strength(2)
-      )
-      .force(
-        "charge",
-        d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
-      )
-      .force(
-        "collision",
-        d3.forceCollide(COLLISION_DISTANCE + 1).iterations(10)
-      )
-      .on("tick", ticked)
-      .on("end", () => {
-        nodes.forEach((node) => {
-          node.fx = node.x;
-          node.fy = node.y;
-        });
-        simulation.stop();
+    const sim = buildSimulation();
+    sim.on("tick", ticked).on("end", () => {
+      nodes.forEach((node) => {
+        node.fx = node.x;
+        node.fy = node.y;
       });
+      sim.stop();
+    });
+    return sim;
   }, [ticked]);
 
   const updateSimulation = useCallback(() => {
@@ -150,18 +119,17 @@ function NetworkGraph({ nodes, links, nodeEvent, handleNodeEvent }) {
   const handleHoverNode = useCallback(
     (selectedNode) => {
       const { node, link } = getNodes();
-      const hoverDuration = 250;
 
-      const linkSelection = link.transition().duration(hoverDuration);
+      const linkSelection = link.transition().duration(HOVER_DURATION);
       const circleSelection = node
         .select(".node circle")
         .transition()
-        .duration(hoverDuration);
+        .duration(HOVER_DURATION);
 
       const textSelection = node
         .select(".node-text")
         .transition()
-        .duration(hoverDuration);
+        .duration(HOVER_DURATION);
 
       if (selectedNode?.isParent) {
         const childIds = links
@@ -208,7 +176,7 @@ function NetworkGraph({ nodes, links, nodeEvent, handleNodeEvent }) {
     zoomRect
       .call(zoom)
       .transition()
-      .duration(200)
+      .duration(ZOOM_DURATION)
       .call(zoom.translateTo, x, y)
       .transition()
       .duration(500)
@@ -302,7 +270,7 @@ function NetworkGraph({ nodes, links, nodeEvent, handleNodeEvent }) {
           gText
             .append("rect")
             .style("fill", "white")
-            .style("opacity", 0.8)
+            .style("opacity", TEXT_BG_OPACITY)
             .attr("width", (d) => d.bbox.width + 2 * xMargin)
             .attr("height", (d) => d.bbox.height + 2 * yMargin)
             .attr("rx", "5")
@@ -402,6 +370,6 @@ function NetworkGraph({ nodes, links, nodeEvent, handleNodeEvent }) {
       </svg>
     </StyledSVGContainer>
   );
-}
+};
 
 export default NetworkGraph;

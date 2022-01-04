@@ -1,5 +1,6 @@
 import * as d3 from "d3";
-import NetworkGraph, { CLICK, HOVER } from "../NetworkGraph";
+import NetworkGraph from "../NetworkGraph";
+import { CLICK, HOVER } from "../../constants";
 import {
   getColor,
   simpleData,
