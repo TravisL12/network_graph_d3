@@ -12,7 +12,10 @@ import {
 } from "./helpers";
 import {
   HOVER,
+  HOVER_DURATION,
+  ZOOM_DURATION,
   CLICK,
+  TEXT_BG_OPACITY,
   MIN_ZOOM,
   MAX_ZOOM,
   CLICK_ZOOM_LEVEL,
@@ -116,18 +119,17 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   const handleHoverNode = useCallback(
     (selectedNode) => {
       const { node, link } = getNodes();
-      const hoverDuration = 250;
 
-      const linkSelection = link.transition().duration(hoverDuration);
+      const linkSelection = link.transition().duration(HOVER_DURATION);
       const circleSelection = node
         .select(".node circle")
         .transition()
-        .duration(hoverDuration);
+        .duration(HOVER_DURATION);
 
       const textSelection = node
         .select(".node-text")
         .transition()
-        .duration(hoverDuration);
+        .duration(HOVER_DURATION);
 
       if (selectedNode?.isParent) {
         const childIds = links
@@ -186,10 +188,10 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     zoomRect
       .call(zoom)
       .transition()
-      .duration(200)
+      .duration(ZOOM_DURATION)
       .call(zoom.translateTo, x, y)
       .transition()
-      .duration(500)
+      .duration(ZOOM_DURATION)
       .call(zoom.scaleTo, CLICK_ZOOM_LEVEL);
   };
 
@@ -280,7 +282,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
           gText
             .append("rect")
             .style("fill", "white")
-            .style("opacity", 0.8)
+            .style("opacity", TEXT_BG_OPACITY)
             .attr("width", (d) => d.bbox.width + 2 * xMargin)
             .attr("height", (d) => d.bbox.height + 2 * yMargin)
             .attr("rx", "5")

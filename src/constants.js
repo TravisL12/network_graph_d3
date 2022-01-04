@@ -7,6 +7,9 @@ export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 12;
 export const CLICK_ZOOM_LEVEL = 3;
 export const UPDATE_DURATION = 500;
+export const HOVER_DURATION = 100;
+export const ZOOM_DURATION = 250;
+export const TEXT_BG_OPACITY = 0.8;
 
 export const CIRCLE_BASE_RADIUS = 8;
 export const ROOT_BASE_RADIUS = CIRCLE_BASE_RADIUS * 2;
