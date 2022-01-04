@@ -54,9 +54,8 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   }, []);
 
   const enableZoom = useCallback(() => {
-    const { zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
-    zoomRect.call(zoom).call(zoom.translateTo, width / 2, height / 2);
+    zoomTo(width / 2, height / 2);
   }, []);
 
   const ticked = useCallback(() => {
@@ -171,7 +170,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     [getNodes, links]
   );
 
-  const zoomTo = (x, y, scale = CLICK_ZOOM_LEVEL) => {
+  const zoomTo = (x, y, scale = 1) => {
     const { zoomRect } = getNodes();
     zoomRect
       .call(zoom)
@@ -185,7 +184,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
 
   const handleNodeClickZoom = (event) => {
     const { x, y } = d3.select(event.target.parentNode).data()[0];
-    zoomTo(x, y);
+    zoomTo(x, y, CLICK_ZOOM_LEVEL);
   };
 
   const handleMouseOver = useCallback(
@@ -334,7 +333,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     const { zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
     zoomRect.on("dblclick", () => {
-      zoomTo(width / 2, height / 2, 1);
+      zoomTo(width / 2, height / 2);
     });
 
     updateViewportDimensions();
@@ -352,7 +351,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     }
     if (nodeEvent?.type === CLICK) {
       const { x, y } = nodeEvent.node;
-      zoomTo(x, y);
+      zoomTo(x, y, CLICK_ZOOM_LEVEL);
     }
   }, [nodeEvent]);
 
