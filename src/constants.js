@@ -19,8 +19,6 @@ export const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
 export const STROKE_COLOR = "#177E89";
 export const WIDE_STROKE_WIDTH = "4px";
 export const REGULAR_STROKE_WIDTH = "2px";
-export const strokeColor = (d) => d3.color(d.color).darker(1);
-export const darkStrokeColor = (d) => d3.color(d.color).darker(1.5);
 
 export const LINK_STROKE_WIDTH = 0.25;
 export const LINK_DISTANCE = 200;
@@ -32,5 +30,11 @@ export const ALPHA_MIN = 0.1; // stop speed
 export const ALPHA = 0.5; // start speed
 export const ALPHA_DECAY = 0.05; // speed to decay to stop
 
-export const xMargin = 4;
-export const yMargin = 0;
+export const X_MARGIN = 4; // margins for text/label background
+export const Y_MARGIN = 0; // margins for text/label background
+
+export const strokeColor = (d) => d3.color(d.color).darker(1);
+export const darkStrokeColor = (d) => d3.color(d.color).darker(1.5);
+export const brightStrokeColor = (color = STROKE_COLOR) =>
+  d3.color(color).brighter(1.5);
+export const centerZoom = (width) => (2 * width) / 5;

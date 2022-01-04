@@ -26,12 +26,14 @@ import {
   REGULAR_STROKE_WIDTH,
   strokeColor,
   darkStrokeColor,
+  centerZoom,
   LINK_STROKE_WIDTH,
   ALPHA_MIN,
   ALPHA,
   ALPHA_DECAY,
-  xMargin,
-  yMargin,
+  X_MARGIN,
+  Y_MARGIN,
+  brightStrokeColor,
 } from "../../constants";
 
 let zoomTransform = d3.zoomIdentity;
@@ -58,7 +60,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
 
   const enableZoom = useCallback(() => {
     const { width, height } = getHeightWidth();
-    zoomTo(width / 2, height / 2);
+    zoomTo(centerZoom(width), height / 2);
   }, []);
 
   const ticked = useCallback(() => {
@@ -158,7 +160,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         const hasChild = (id) => id === selectedNode?.id;
 
         textSelection.style("opacity", (d) => (hasChild(d.id) ? 100 : 0));
-        linkSelection.attr("stroke", (d) => d.color);
+        linkSelection.attr("stroke", (d) => strokeColor(d));
         circleSelection.attr("r", (d) =>
           hoverCircleCheck(hasChild(d.id), getNodeRadius(d))
         );
@@ -202,6 +204,49 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     handleHoverNode(null);
   }, [handleHoverNode]);
 
+  const linkStyle = (link) => {
+    link
+      .attr("stroke", brightStrokeColor())
+      .style("stroke-width", `${LINK_STROKE_WIDTH * 10}px`)
+      .style("fill", "none")
+      .call((e) => {
+        e.transition()
+          .duration(UPDATE_DURATION * 3)
+          .attr("stroke", (d) => strokeColor(d))
+          .style("stroke-width", (d) => `${d.weight * LINK_STROKE_WIDTH}px`);
+      });
+  };
+
+  const circleStyle = (circle) => {
+    circle
+      .attr("r", (d) => getNodeRadius(d))
+      .style("fill", (d) => d.color || brightStrokeColor(d.parent.color))
+      .attr("stroke", (d) => d3.color(d.color).darker(1))
+      .attr("stroke-width", REGULAR_STROKE_WIDTH);
+  };
+
+  const textStyle = (text) => {
+    text
+      .style("font-size", (d) => (d.isParent ? "16px" : "12px"))
+      .attr("fill", "black")
+      .style("text-anchor", "middle")
+      .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
+  };
+
+  const textRectStyle = (rect) => {
+    rect
+      .style("fill", "white")
+      .style("opacity", TEXT_BG_OPACITY)
+      .attr("width", (d) => d.bbox.width + 2 * X_MARGIN)
+      .attr("height", (d) => d.bbox.height + 2 * Y_MARGIN)
+      .attr("rx", "5")
+      .attr("transform", function (d) {
+        return `translate(-${
+          (d.bbox.width + X_MARGIN) / 2
+        }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + Y_MARGIN})`;
+      });
+  };
+
   const draw = useCallback(() => {
     const { node, link } = getNodes();
 
@@ -210,24 +255,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         links,
         (d) => `${d.source.id || d.source}-${d.target.id || d.target}`
       )
-      .join((enter) => {
-        const path = enter
-          .append("path")
-          .attr("class", "line")
-          .attr("stroke", d3.color(STROKE_COLOR).brighter(1.5))
-          .style("stroke-width", `${LINK_STROKE_WIDTH * 10}px`)
-          .style("fill", "none")
-          .call((e) => {
-            e.transition()
-              .duration(UPDATE_DURATION * 3)
-              .attr("stroke", (d) => d3.color(d.color).darker(1))
-              .style(
-                "stroke-width",
-                (d) => `${d.weight * LINK_STROKE_WIDTH}px`
-              );
-          });
-        return path;
-      });
+      .join((enter) =>
+        enter.append("path").attr("class", "line").call(linkStyle)
+      );
 
     node
       .data(nodes, (d) => {
@@ -238,13 +268,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
           const g = enter.append("g").attr("class", "node");
 
           g.append("circle")
-            .attr("r", (d) => getNodeRadius(d))
-            .style(
-              "fill",
-              (d) => d.color || d3.color(d.parent.color).brighter(1.6)
-            )
-            .attr("stroke", (d) => d3.color(d.color).darker(1))
-            .attr("stroke-width", REGULAR_STROKE_WIDTH)
+            .call(circleStyle)
             .on("dblclick", handleNodeClickZoom)
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
@@ -269,27 +293,12 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
             });
           gText.selectAll("text").remove();
 
-          gText
-            .append("rect")
-            .style("fill", "white")
-            .style("opacity", TEXT_BG_OPACITY)
-            .attr("width", (d) => d.bbox.width + 2 * xMargin)
-            .attr("height", (d) => d.bbox.height + 2 * yMargin)
-            .attr("rx", "5")
-            .attr("transform", function (d) {
-              return `translate(-${
-                (d.bbox.width + xMargin) / 2
-              }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + yMargin})`;
-            });
-
+          gText.append("rect").call(textRectStyle);
           gText
             .append("text")
             .text((d) => d.name)
             .join("text")
-            .style("font-size", (d) => (d.isParent ? "16px" : "12px"))
-            .attr("fill", "black")
-            .style("text-anchor", "middle")
-            .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
+            .call(textStyle);
 
           return g;
         },
@@ -336,7 +345,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     const { zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
     zoomRect.on("dblclick", () => {
-      zoomTo(width / 2, height / 2);
+      zoomTo(centerZoom(width), height / 2);
     });
 
     updateViewportDimensions();
