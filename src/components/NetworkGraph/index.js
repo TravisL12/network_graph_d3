@@ -227,16 +227,21 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
             .style("stroke-width", (d) => `${d.weight * LINK_STROKE_WIDTH}px`)
             .call(linkStyle),
         (update) => {
-          update.style("stroke-width", (d) => {
-            if (d.target.isParent) {
-              const linkCount = links.filter(
-                (link) => link.source.id === d.target.id
-              );
-              const thickness = linkCount.length + 1; // add +1 for new link not counted yet
-              return `${thickness * LINK_STROKE_WIDTH}px`;
-            }
-            return `${LINK_STROKE_WIDTH}px`;
-          });
+          update
+            .style("stroke", (d) => {
+              if (d.target.isParent) {
+                return d.target.color;
+              }
+            })
+            .style("stroke-width", (d) => {
+              if (d.target.isParent) {
+                const linkCount = links.filter(
+                  (link) => link.source.id === d.target.id
+                );
+                const thickness = linkCount.length + 1; // add +1 for new link not counted yet
+                return `${thickness * LINK_STROKE_WIDTH}px`;
+              }
+            });
         }
       );
 

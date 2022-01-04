@@ -1,7 +1,35 @@
-import * as d3 from "d3";
 import { LoremIpsum } from "lorem-ipsum";
 
-const colors = d3.schemeCategory10;
+const colors = [
+  "#1AB4D2",
+  "#EF821E",
+  "#6FA9D7",
+  "#FF6D41",
+  "#31449A",
+  "#E12A1F",
+  "#C61574",
+  "#A21D27",
+  "#A24C90",
+  "#C39B6D",
+  "#705193",
+  "#F3BA1E",
+];
+
+const darkColors = [
+  "#1389A0",
+  "#B06014",
+  "#5580A5",
+  "#B45030",
+  "#233075",
+  "#A61C17",
+  "#940558",
+  "#82111A",
+  "#7B366E",
+  "#927652",
+  "#533971",
+  "#B28A13",
+];
+
 const lorem = new LoremIpsum({
   sentencesPerParagraph: {
     max: 8,
