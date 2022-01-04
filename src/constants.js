@@ -20,6 +20,9 @@ export const STROKE_COLOR = "#177E89";
 export const WIDE_STROKE_WIDTH = "4px";
 export const REGULAR_STROKE_WIDTH = "2px";
 
+export const PARENT_TEXT_SIZE = "16px";
+export const CHILD_TEXT_SIZE = "12px";
+
 export const LINK_STROKE_WIDTH = 0.25;
 export const LINK_DISTANCE = 200;
 
@@ -33,8 +36,57 @@ export const ALPHA_DECAY = 0.05; // speed to decay to stop
 export const X_MARGIN = 4; // margins for text/label background
 export const Y_MARGIN = 0; // margins for text/label background
 
+export const getNodeRadius = (d) => {
+  return d.isRoot
+    ? ROOT_BASE_RADIUS
+    : d.isParent
+    ? CIRCLE_BASE_RADIUS
+    : CHILD_CIRCLE_BASE_RADIUS;
+};
+
 export const strokeColor = (d) => d3.color(d.color).darker(1);
 export const darkStrokeColor = (d) => d3.color(d.color).darker(1.5);
 export const brightStrokeColor = (color = STROKE_COLOR) =>
   d3.color(color).brighter(1.5);
 export const centerZoom = (width) => (2 * width) / 5;
+
+export const circleStyle = (circle) => {
+  circle
+    .attr("r", (d) => getNodeRadius(d))
+    .style("fill", (d) => d.color || brightStrokeColor(d.parent.color))
+    .attr("stroke", (d) => darkStrokeColor(d))
+    .attr("stroke-width", REGULAR_STROKE_WIDTH);
+};
+
+export const linkStyle = (link) => {
+  link.style("fill", "none").call((e) => {
+    e.transition()
+      .duration(UPDATE_DURATION * 3)
+      .attr("stroke", (d) => strokeColor(d))
+      .style("stroke-width", (d) => `${d.weight * LINK_STROKE_WIDTH}px`);
+  });
+};
+
+export const textStyle = (text) => {
+  text
+    .style("font-size", (d) =>
+      d.isParent ? PARENT_TEXT_SIZE : CHILD_TEXT_SIZE
+    )
+    .attr("fill", "black")
+    .style("text-anchor", "middle")
+    .attr("transform", `translate(0, -${CIRCLE_BASE_RADIUS})`);
+};
+
+export const textRectStyle = (rect) => {
+  rect
+    .style("fill", "white")
+    .style("opacity", TEXT_BG_OPACITY)
+    .attr("width", (d) => d.bbox.width + 2 * X_MARGIN)
+    .attr("height", (d) => d.bbox.height + 2 * Y_MARGIN)
+    .attr("rx", "5")
+    .attr("transform", function (d) {
+      return `translate(-${
+        (d.bbox.width + X_MARGIN) / 2
+      }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + Y_MARGIN})`;
+    });
+};

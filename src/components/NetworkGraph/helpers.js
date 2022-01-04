@@ -1,13 +1,10 @@
 import * as d3 from "d3";
 import { randomizer } from "../../getData";
 import {
-  ROOT_BASE_RADIUS,
-  CHILD_CIRCLE_BASE_RADIUS,
   COLLISION_DISTANCE,
   LINK_DISTANCE,
   ARM_STRENGTH,
   ARM_MAX_DISTANCE,
-  CIRCLE_BASE_RADIUS,
 } from "../../constants";
 
 // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
@@ -53,12 +50,4 @@ export const buildSimulation = () => {
 
 export const hoverCircleCheck = (isHovered, r) => {
   return isHovered ? r * 2 : r;
-};
-
-export const getNodeRadius = (d) => {
-  return d.isRoot
-    ? ROOT_BASE_RADIUS
-    : d.isParent
-    ? CIRCLE_BASE_RADIUS
-    : CHILD_CIRCLE_BASE_RADIUS;
 };
