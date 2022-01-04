@@ -34,12 +34,15 @@ import {
   yMargin,
 } from "../../constants";
 
+let zoomTransform = d3.zoomIdentity;
+
 const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   const graphRef = useRef();
   const zoom = d3
     .zoom()
     .scaleExtent([MIN_ZOOM, MAX_ZOOM])
     .on("zoom", (event) => {
+      zoomTransform = event.transform;
       const { link, node } = getNodes();
       node.attr("transform", event.transform);
       link.attr("transform", event.transform);
