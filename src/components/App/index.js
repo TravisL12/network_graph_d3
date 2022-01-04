@@ -6,6 +6,7 @@ import {
   simpleData,
   generateNodes,
   weightRandomizer,
+  randomizer,
 } from "../../getData";
 import {
   SAppContainer,
@@ -19,7 +20,12 @@ import {
   SParentListItem,
 } from "../../styles";
 import { useState } from "react";
-import { randomNode } from "../NetworkGraph/helpers";
+
+function randomNode(nodes, isParents = false) {
+  const n = isParents ? nodes.filter((n) => n.isParent) : nodes;
+  const idx = randomizer(n.length - 1);
+  return n[idx];
+}
 
 const App = () => {
   const [data, setData] = useState(simpleData());

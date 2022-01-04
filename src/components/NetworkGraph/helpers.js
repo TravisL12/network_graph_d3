@@ -1,5 +1,4 @@
 import * as d3 from "d3";
-import { randomizer } from "../../getData";
 import {
   COLLISION_DISTANCE,
   LINK_DISTANCE,
@@ -8,13 +7,15 @@ import {
 } from "../../constants";
 
 // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
-// return `M${d.source.x},${d.source.y} L ${d.target.x},${d.target.y}`; // straight line
 export const positionLink = (d) => {
   const r = Math.hypot(d.target.x - d.source.x, d.target.y - d.source.y);
-  return `
+  const curvedLine = `
     M${d.source.x},${d.source.y}
     A${r},${r} 0 0,1 ${d.target.x},${d.target.y}
   `;
+  // const straightLine = `M${d.source.x},${d.source.y} L ${d.target.x},${d.target.y}`;
+  // return d.target.isParent || d.source.isRoot ? curvedLine : straightLine;
+  return curvedLine;
 };
 
 export const getHeightWidth = () => {
@@ -23,12 +24,6 @@ export const getHeightWidth = () => {
   const height = g.clientHeight;
   return { width, height };
 };
-
-export function randomNode(nodes, isParents = false) {
-  const n = isParents ? nodes.filter((n) => n.isParent) : nodes;
-  const idx = randomizer(n.length - 1);
-  return n[idx];
-}
 
 export const buildSimulation = () => {
   return d3
