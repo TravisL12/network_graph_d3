@@ -33,7 +33,6 @@ import {
   textStyle,
   textRectStyle,
   circleStyle,
-  strokeColor,
   darkStrokeColor,
   centerZoom,
   brightStrokeColor,
@@ -147,13 +146,13 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
 
         textSelection.style("opacity", (d) => (hasChild(d.id) ? 100 : 0));
         linkSelection.attr("stroke", (d) =>
-          hasChild(d.source.id) ? darkStrokeColor(d) : strokeColor(d)
+          hasChild(d.source.id) ? darkStrokeColor(d) : darkStrokeColor(d, 1)
         );
         circleSelection.attr("r", (d) =>
           hoverCircleCheck(hasChild(d.id), getNodeRadius(d))
         );
         circleSelection.attr("stroke", (d) =>
-          hasChild(d.id) ? darkStrokeColor(d) : strokeColor(d)
+          hasChild(d.id) ? darkStrokeColor(d) : darkStrokeColor(d, 1)
         );
         circleSelection.attr("stroke-width", (d) =>
           hasChild(d.id) ? WIDE_STROKE_WIDTH : REGULAR_STROKE_WIDTH
@@ -162,12 +161,12 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         const hasChild = (id) => id === selectedNode?.id;
 
         textSelection.style("opacity", (d) => (hasChild(d.id) ? 100 : 0));
-        linkSelection.attr("stroke", (d) => strokeColor(d));
+        linkSelection.attr("stroke", (d) => darkStrokeColor(d, 1));
         circleSelection.attr("r", (d) =>
           hoverCircleCheck(hasChild(d.id), getNodeRadius(d))
         );
         circleSelection.attr("stroke", (d) =>
-          hasChild(d.id) ? darkStrokeColor(d) : strokeColor(d)
+          hasChild(d.id) ? darkStrokeColor(d) : darkStrokeColor(d, 1)
         );
         circleSelection.attr("stroke-width", (d) =>
           hasChild(d.id) ? WIDE_STROKE_WIDTH : REGULAR_STROKE_WIDTH
@@ -176,7 +175,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         // resets all nodes if not a parent (or if no node selected)
         circleSelection.call(circleStyle);
         textSelection.style("opacity", 0);
-        linkSelection.call(linkStyle);
+        linkSelection.attr("stroke", (d) => darkStrokeColor(d, 1));
       }
     },
     [getNodes, links]
@@ -219,13 +218,26 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         links,
         (d) => `${d.source.id || d.source}-${d.target.id || d.target}`
       )
-      .join((enter) =>
-        enter
-          .append("path")
-          .attr("class", "line")
-          .attr("stroke", brightStrokeColor())
-          .style("stroke-width", `${LINK_STROKE_WIDTH * 10}px`)
-          .call(linkStyle)
+      .join(
+        (enter) =>
+          enter
+            .append("path")
+            .attr("class", "line")
+            .attr("stroke", brightStrokeColor())
+            .style("stroke-width", (d) => `${d.weight * LINK_STROKE_WIDTH}px`)
+            .call(linkStyle),
+        (update) => {
+          update.style("stroke-width", (d) => {
+            if (d.target.isParent) {
+              const linkCount = links.filter(
+                (link) => link.source.id === d.target.id
+              );
+              const thickness = linkCount.length + 1; // add +1 for new link not counted yet
+              return `${thickness * LINK_STROKE_WIDTH}px`;
+            }
+            return `${LINK_STROKE_WIDTH}px`;
+          });
+        }
       );
 
     node

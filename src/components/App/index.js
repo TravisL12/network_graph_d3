@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import NetworkGraph from "../NetworkGraph";
-import { CLICK, HOVER } from "../../constants";
+import { CLICK, darkStrokeColor, HOVER } from "../../constants";
 import {
   getColor,
   simpleData,
@@ -57,12 +57,14 @@ const App = () => {
     setData({ ...data, links: [...data.links, ...newLinks] });
   };
 
-  const addNodes = (id) => {
+  const addNodes = (id, parentNode = null) => {
     const copyNodes = [...data.nodes];
     const root = copyNodes.find((node) => (node.id || node) === id);
 
     if (!root.isParent) {
-      root.color = getColor();
+      root.color = parentNode.isRoot
+        ? getColor()
+        : darkStrokeColor(parentNode, 0.6);
     }
 
     root.isParent = true;
@@ -136,7 +138,7 @@ const App = () => {
                             </StyledAddButton>
                             {!cNode.isParent && (
                               <StyledAddButton
-                                onClick={() => addNodes(cNode.id)}
+                                onClick={() => addNodes(cNode.id, sNode)}
                               >
                                 Add
                               </StyledAddButton>

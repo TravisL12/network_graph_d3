@@ -13,8 +13,14 @@ const lorem = new LoremIpsum({
   },
 });
 
+const light = 1;
+const mid = 5;
+const heavy = 10;
 export function weightRandomizer() {
-  const weighting = [1, 1, 1, 1, 1, 8, 8, 8, 8, 8, 15, 15, 15, 30];
+  const lights = new Array(10).fill(light);
+  const mids = new Array(0).fill(mid);
+  const heavies = new Array(0).fill(heavy);
+  const weighting = [...lights, ...mids, ...heavies];
   const idx = randomizer(weighting.length - 1);
   return weighting[idx];
 }
@@ -27,10 +33,10 @@ export const getColor = () => {
   return colors[randomizer(colors.length - 1)];
 };
 
-export const generateNodes = (root, color) => {
+export const generateNodes = (root, color, num = 1) => {
   const nodes = [];
   const links = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < num; i++) {
     const id = randomizer(1000, 1);
     const node = {
       id,

@@ -23,7 +23,7 @@ export const REGULAR_STROKE_WIDTH = "2px";
 export const PARENT_TEXT_SIZE = "16px";
 export const CHILD_TEXT_SIZE = "12px";
 
-export const LINK_STROKE_WIDTH = 0.25;
+export const LINK_STROKE_WIDTH = 0.5;
 export const LINK_DISTANCE = 200;
 
 export const ARM_STRENGTH = 50;
@@ -44,8 +44,8 @@ export const getNodeRadius = (d) => {
     : CHILD_CIRCLE_BASE_RADIUS;
 };
 
-export const strokeColor = (d) => d3.color(d.color).darker(1);
-export const darkStrokeColor = (d) => d3.color(d.color).darker(1.5);
+export const darkStrokeColor = (d, amount = 1.5) =>
+  d3.color(d.color).darker(amount);
 export const brightStrokeColor = (color = STROKE_COLOR) =>
   d3.color(color).brighter(1.5);
 export const centerZoom = (width) => (2 * width) / 5;
@@ -62,8 +62,7 @@ export const linkStyle = (link) => {
   link.style("fill", "none").call((e) => {
     e.transition()
       .duration(UPDATE_DURATION * 3)
-      .attr("stroke", (d) => strokeColor(d))
-      .style("stroke-width", (d) => `${d.weight * LINK_STROKE_WIDTH}px`);
+      .attr("stroke", (d) => darkStrokeColor(d, 1));
   });
 };
 
@@ -90,3 +89,16 @@ export const textRectStyle = (rect) => {
       }, -${d.bbox.height * 0.8 + CIRCLE_BASE_RADIUS + Y_MARGIN})`;
     });
 };
+
+/**
+ * zoom to fit
+ * click to show/keep names
+ * scale the text based on zoom (smaller text when high zoom scale)
+ * double click zoom to fit node with children
+ * work with predefined data, not manually creating it
+ * x - weighting based on number of children
+ * less arm length between parent and child
+ * large arm length between root and child
+ * x - colors get darker as they grow children (not random color)
+ * last node being hollow
+ */
