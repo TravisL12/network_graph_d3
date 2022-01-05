@@ -120,17 +120,19 @@ export const buildGyanData = (data) => {
       return acc;
     }, {})
   );
-  console.log(values);
+
   const vals = groupBy(values, "parent_id");
+  const childVals = groupBy(values, "child_id");
   const nodes = [];
   const links = [];
-  Object.entries(vals).forEach(([id, v]) => {
+  [...Object.entries(childVals), ...Object.entries(vals)].forEach(([id, v]) => {
     nodes.push({
-      id,
+      id: +id,
       name: v[0].parent_name,
+      color: getColor(),
     });
     v.forEach((child) => {
-      links.push({ source: +id, target: child.child_id });
+      links.push({ source: +id, target: +child.child_id, color: getColor() });
     });
   });
   return {

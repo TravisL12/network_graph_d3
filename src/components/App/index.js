@@ -21,7 +21,6 @@ import {
   SParentListItem,
 } from "../../styles";
 import { useEffect, useState } from "react";
-import { groupBy } from "lodash";
 
 function randomNode(nodes, isParents = false) {
   const n = isParents ? nodes.filter((n) => n.isParent) : nodes;
@@ -30,7 +29,7 @@ function randomNode(nodes, isParents = false) {
 }
 
 const App = () => {
-  const [data, setData] = useState(simpleData());
+  const [data, setData] = useState({ nodes: [], links: [] });
   const [nodeEvent, setNodeEvent] = useState(null);
 
   const fetchData = () => {
@@ -38,7 +37,7 @@ const App = () => {
       .then((d) => d.json())
       .then((values) => {
         const vals = buildGyanData(values);
-        console.log(vals);
+        setData(vals);
       });
   };
 
@@ -97,6 +96,10 @@ const App = () => {
     setNodeEvent({ type, node });
   };
 
+  if (!data.nodes.length) {
+    return "loading";
+  }
+
   return (
     <SAppContainer>
       <NetworkGraph
@@ -114,7 +117,7 @@ const App = () => {
                 <StyledAddButton onClick={addLinks}>Add Links</StyledAddButton>
               </div>
               <h3>{nodes[0]?.name}</h3>
-              {grouped.map(([id, children]) => {
+              {/* {grouped.map(([id, children]) => {
                 const parentNode = findNode(id);
                 if (!parentNode.isParent) return null;
 
@@ -162,7 +165,7 @@ const App = () => {
                     </SChildList>
                   </ul>
                 );
-              })}
+              })} */}
             </SSidebarInner>
           </SSidebarContainer>
         </div>

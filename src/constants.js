@@ -53,7 +53,7 @@ export const centerZoom = (width) => (3 * width) / 5;
 export const circleStyle = (circle) => {
   circle
     .attr("r", (d) => getNodeRadius(d))
-    .style("fill", (d) => d.color || brightStrokeColor(d.parent.color))
+    .style("fill", (d) => d.color)
     .attr("stroke", (d) => darkStrokeColor(d))
     .attr("stroke-width", REGULAR_STROKE_WIDTH);
 };
