@@ -7,6 +7,7 @@ import {
   generateNodes,
   weightRandomizer,
   randomizer,
+  buildGyanData,
 } from "../../getData";
 import {
   SAppContainer,
@@ -19,7 +20,8 @@ import {
   SChildListItem,
   SParentListItem,
 } from "../../styles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { groupBy } from "lodash";
 
 function randomNode(nodes, isParents = false) {
   const n = isParents ? nodes.filter((n) => n.isParent) : nodes;
@@ -30,6 +32,17 @@ function randomNode(nodes, isParents = false) {
 const App = () => {
   const [data, setData] = useState(simpleData());
   const [nodeEvent, setNodeEvent] = useState(null);
+
+  const fetchData = () => {
+    fetch(`${process.env.PUBLIC_URL}/data/planets.json`)
+      .then((d) => d.json())
+      .then((values) => {
+        const vals = buildGyanData(values);
+        console.log(vals);
+      });
+  };
+
+  useEffect(fetchData, []);
 
   const { nodes, links } = data;
   const grouped = d3.groups(links, (d) => d.source.id || d.source);

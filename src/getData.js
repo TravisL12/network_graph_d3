@@ -1,4 +1,5 @@
 import { LoremIpsum } from "lorem-ipsum";
+import { groupBy, uniqBy } from "lodash";
 
 const colors = [
   "#1AB4D2",
@@ -97,4 +98,43 @@ export const simpleData = () => {
 
   const { nodes, links } = generateNodes(root);
   return { nodes: [root, ...nodes], links };
+};
+
+const keys = {
+  "Parent Node Id": "parent_id",
+  "Parent Node Name": "parent_name",
+  "Child Node Id": "child_id",
+  "Child Node Name": "child_name",
+  "Root Node Id": "root_id",
+  "Root Node Name": "root_name",
+  "Relationship Definition": "relationship_definition",
+  "Relationship Identity": "relationship_identity",
+  "TOC Sequence": "toc_sequence",
+  "Friendly Name": "friendly_name",
+};
+
+export const buildGyanData = (data) => {
+  const values = data.map((v) =>
+    Object.keys(v).reduce((acc, key) => {
+      acc[keys[key]] = v[key];
+      return acc;
+    }, {})
+  );
+  console.log(values);
+  const vals = groupBy(values, "parent_id");
+  const nodes = [];
+  const links = [];
+  Object.entries(vals).forEach(([id, v]) => {
+    nodes.push({
+      id,
+      name: v[0].parent_name,
+    });
+    v.forEach((child) => {
+      links.push({ source: +id, target: child.child_id });
+    });
+  });
+  return {
+    nodes: uniqBy(nodes, "id"),
+    links: uniqBy(links, (d) => `${d.source}-${d.target}`),
+  };
 };
