@@ -5,7 +5,7 @@ export const CLICK = "click";
 
 export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 12;
-export const CLICK_ZOOM_LEVEL = 3;
+export const CLICK_ZOOM_LEVEL = 1.5;
 export const UPDATE_DURATION = 500;
 export const HOVER_DURATION = 100;
 export const ZOOM_DURATION = 250;
@@ -48,7 +48,7 @@ export const darkStrokeColor = (d, amount = 1.5) =>
   d3.color(d.color).darker(amount);
 export const brightStrokeColor = (color = STROKE_COLOR) =>
   d3.color(color).brighter(1.5);
-export const centerZoom = (width) => (2 * width) / 5;
+export const centerZoom = (width) => (3 * width) / 5;
 
 export const circleStyle = (circle) => {
   circle

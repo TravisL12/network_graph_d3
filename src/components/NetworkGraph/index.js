@@ -46,10 +46,10 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     .zoom()
     .scaleExtent([MIN_ZOOM, MAX_ZOOM])
     .on("zoom", (event) => {
-      zoomTransform = event.transform;
       const { link, node } = getNodes();
-      node.attr("transform", event.transform);
-      link.attr("transform", event.transform);
+      zoomTransform = event.transform;
+      node.attr("transform", zoomTransform);
+      link.attr("transform", zoomTransform);
     });
 
   const getNodes = useCallback(() => {
@@ -60,25 +60,14 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     return { svg, link, node, zoomRect };
   }, []);
 
-  const enableZoom = useCallback(() => {
-    const { width, height } = getHeightWidth();
-    zoomTo(centerZoom(width), height / 2);
-  }, []);
-
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
     const { width, height } = getHeightWidth();
 
-    nodes[0].x = width / 2;
+    nodes[0].x = centerZoom(width);
     nodes[0].y = height / 2;
 
-    link
-      .attr("x1", ({ source }) => source.x)
-      .attr("y1", ({ source }) => source.y)
-      .attr("x2", ({ target }) => target.x)
-      .attr("y2", ({ target }) => target.y)
-      .attr("d", positionLink);
-
+    link.attr("d", positionLink);
     node
       .selectAll(".node circle")
       .attr("cx", ({ x }) => x)
@@ -108,6 +97,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   }, [ticked]);
 
   const updateSimulation = useCallback(() => {
+    const { node, link } = getNodes();
     const { width, height } = getHeightWidth();
 
     simulation.nodes(nodes);
@@ -120,6 +110,10 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
       .alphaMin(ALPHA_MIN)
       .alpha(ALPHA)
       .restart();
+
+    // update nodes and links with current zoom position
+    node.attr("transform", zoomTransform);
+    link.attr("transform", zoomTransform);
   }, [nodes, links, simulation]);
 
   const handleHoverNode = useCallback(
@@ -182,15 +176,19 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   );
 
   const zoomTo = (x, y, scale = 1) => {
+    const { width, height } = getHeightWidth();
     const { zoomRect } = getNodes();
+
     zoomRect
       .call(zoom)
       .transition()
       .duration(ZOOM_DURATION)
-      .call(zoom.translateTo, x, y)
-      .transition()
-      .duration(500)
-      .call(zoom.scaleTo, scale);
+      .call(zoom.transform, () =>
+        d3.zoomIdentity
+          .translate(centerZoom(width), height / 2)
+          .scale(scale)
+          .translate(-x, -y)
+      );
   };
 
   const handleNodeClickZoom = (event) => {
@@ -335,9 +333,13 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   useEffect(() => {
     const { zoomRect } = getNodes();
     const { width, height } = getHeightWidth();
+
+    // 1 - register reset
     zoomRect.on("dblclick", () => {
       zoomTo(centerZoom(width), height / 2);
     });
+    // 2 - initialize centering
+    zoomTo(centerZoom(width), height / 2); // initial centering
 
     updateViewportDimensions();
     window.addEventListener("resize", throttledResize);
@@ -345,8 +347,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
 
   useEffect(() => {
     draw();
-    enableZoom();
-  }, [draw, enableZoom]);
+  }, [draw]);
 
   useEffect(() => {
     if (nodeEvent?.type === HOVER) {
