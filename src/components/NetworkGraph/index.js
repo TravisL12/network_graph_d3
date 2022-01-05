@@ -42,6 +42,8 @@ let zoomTransform = d3.zoomIdentity;
 
 const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   const graphRef = useRef();
+  const rootIdx = nodes.findIndex(({ isRoot }) => isRoot);
+
   const zoom = d3
     .zoom()
     .scaleExtent([MIN_ZOOM, MAX_ZOOM])
@@ -64,8 +66,8 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     const { link, node } = getNodes();
     const { width, height } = getHeightWidth();
 
-    // nodes[0].x = centerZoom(width);
-    // nodes[0].y = height / 2;
+    nodes[rootIdx].x = centerZoom(width);
+    nodes[rootIdx].y = height / 2;
 
     link.attr("d", positionLink);
     node

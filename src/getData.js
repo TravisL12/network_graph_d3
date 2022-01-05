@@ -137,6 +137,8 @@ export const buildGyanData = (data) => {
         name: v[0].parent_name,
         color: isRoot ? "magenta" : color,
         isRoot,
+        x: randomizer(800, 250),
+        y: randomizer(800, 250),
       });
       v.forEach((child) => {
         const childId =
@@ -149,6 +151,9 @@ export const buildGyanData = (data) => {
             id: childId,
             name: child.child_name,
             color,
+            isRoot,
+            x: randomizer(800, 250),
+            y: randomizer(800, 250),
           });
         }
       });

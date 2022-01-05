@@ -73,6 +73,7 @@ export const StyledAddButton = styled.button`
   text-decoration: underline;
   border: none;
   cursor: pointer;
+  text-align: left;
 
   &:hover {
     color: #4f4f4f;
@@ -81,11 +82,17 @@ export const StyledAddButton = styled.button`
 
 export const SChildList = styled.ul`
   padding: 0;
+  background: rgba(0, 0, 0, 0.1);
 `;
 
 const SListItem = styled.li`
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+
+  &:nth-child(even) {
+    background: rgba(0, 0, 0, 0.3);
+  }
 `;
 
 export const SParentListItem = styled(SListItem)`
