@@ -96,9 +96,11 @@ export const textRectStyle = (rect) => {
  * scale the text based on zoom (smaller text when high zoom scale)
  * double click zoom to fit node with children
  * work with predefined data, not manually creating it
- * x - weighting based on number of children
  * less arm length between parent and child
  * large arm length between root and child
- * x - colors get darker as they grow children (not random color)
  * last node being hollow
+ *
+ * x - weighting based on number of children
+ * x - colors get darker as they grow children (not random color)
+ * x - zoom and translate together
  */
