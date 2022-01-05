@@ -130,9 +130,6 @@ const App = () => {
                       <StyledAddButton onClick={() => mouseEvent(id, CLICK)}>
                         {parentNode.name}
                       </StyledAddButton>
-                      <StyledAddButton onClick={() => addNodes(parentNode.id)}>
-                        Add
-                      </StyledAddButton>
                     </SParentListItem>
                     <SChildList>
                       {children.map((child) => {
@@ -149,13 +146,6 @@ const App = () => {
                             >
                               {cNode.name}
                             </StyledAddButton>
-                            {!cNode.isParent && (
-                              <StyledAddButton
-                                onClick={() => addNodes(cNode.id, sNode)}
-                              >
-                                Add
-                              </StyledAddButton>
-                            )}
                           </SChildListItem>
                         );
                       })}

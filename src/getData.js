@@ -151,7 +151,7 @@ export const buildGyanData = (data) => {
             id: childId,
             name: child.child_name,
             color,
-            isRoot,
+            isRoot: false,
             x: randomizer(800, 250),
             y: randomizer(800, 250),
           });
