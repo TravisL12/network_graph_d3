@@ -54,10 +54,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
 
   const getNodes = useCallback(() => {
     const svg = d3.select(graphRef.current);
-    const zoomRect = svg.select(".zoom-rect");
     const link = svg.selectAll(".lines").selectAll(".line");
     const node = svg.selectAll(".nodes").selectAll(".node");
-    return { svg, link, node, zoomRect };
+    return { svg, link, node };
   }, []);
 
   const ticked = useCallback(() => {
@@ -177,9 +176,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
 
   const zoomTo = (x, y, scale = 1) => {
     const { width, height } = getHeightWidth();
-    const { zoomRect } = getNodes();
+    const { svg } = getNodes();
 
-    zoomRect
+    svg
       .call(zoom)
       .transition()
       .duration(ZOOM_DURATION)
@@ -254,7 +253,6 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
           g.append("circle")
             .attr("class", "circle")
             .call(circleStyle)
-            .on("dblclick", handleNodeClickZoom)
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
 
@@ -264,7 +262,6 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
             )
-            .on("dblclick", handleNodeClickZoom)
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
 
@@ -322,21 +319,24 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   ]);
 
   const updateViewportDimensions = useCallback(() => {
-    const { svg, zoomRect } = getNodes();
+    const { svg } = getNodes();
     const { width, height } = getHeightWidth();
     svg.attr("width", width).attr("height", height);
-    zoomRect.attr("width", width).attr("height", height);
   }, [getNodes]);
 
   const throttledResize = throttle(updateViewportDimensions, 100);
 
   useEffect(() => {
-    const { zoomRect } = getNodes();
+    const { svg } = getNodes();
     const { width, height } = getHeightWidth();
 
     // 1 - register reset
-    zoomRect.on("dblclick", () => {
-      zoomTo(centerZoom(width), height / 2);
+    svg.on("dblclick", (event) => {
+      if (event.target.tagName === "svg") {
+        zoomTo(centerZoom(width), height / 2);
+      } else {
+        handleNodeClickZoom(event);
+      }
     });
     // 2 - initialize centering
     zoomTo(centerZoom(width), height / 2); // initial centering
@@ -362,10 +362,6 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   return (
     <StyledSVGContainer>
       <svg ref={graphRef}>
-        <rect
-          className="zoom-rect"
-          style={{ fill: "none", pointerEvents: "all" }}
-        />
         <g className="main">
           <g className="lines"></g>
           <g className="nodes"></g>

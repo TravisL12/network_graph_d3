@@ -38,11 +38,11 @@ const App = () => {
       .then((d) => d.json())
       .then((values) => {
         const vals = buildGyanData(values);
-        console.log(vals);
+        // console.log(vals);
       });
   };
 
-  useEffect(fetchData, []);
+  // useEffect(fetchData, []);
 
   const { nodes, links } = data;
   const grouped = d3.groups(links, (d) => d.source.id || d.source);

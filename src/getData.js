@@ -120,7 +120,7 @@ export const buildGyanData = (data) => {
       return acc;
     }, {})
   );
-  console.log(values);
+
   const vals = groupBy(values, "parent_id");
   const nodes = [];
   const links = [];
