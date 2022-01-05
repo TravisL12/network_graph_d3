@@ -24,6 +24,7 @@ import {
   LINK_STROKE_WIDTH,
   ALPHA_MIN,
   ALPHA,
+  INITIAL_ZOOM,
   ALPHA_DECAY,
   PARENT_TEXT_SIZE,
   CHILD_TEXT_SIZE,
@@ -36,6 +37,7 @@ import {
   darkStrokeColor,
   centerZoom,
   brightStrokeColor,
+  MAX_LINK_STROKE,
 } from "../../constants";
 
 let zoomTransform = d3.zoomIdentity;
@@ -174,7 +176,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     [getNodes, links]
   );
 
-  const zoomTo = (x, y, scale = 1) => {
+  const zoomTo = (x, y, scale = INITIAL_ZOOM) => {
     const { width, height } = getHeightWidth();
     const { svg } = getNodes();
 
@@ -190,9 +192,32 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
       );
   };
 
-  const handleNodeClickZoom = (event) => {
+  const handleNodeDoubleClickZoom = (event) => {
     const { x, y } = d3.select(event.target.parentNode).data()[0];
     zoomTo(x, y, CLICK_ZOOM_LEVEL);
+  };
+
+  const handleClickShowNames = (event, show = false) => {
+    const { node } = getNodes();
+    const textSelection = node
+      .select(".node-text")
+      .transition()
+      .duration(HOVER_DURATION);
+
+    if (!show) {
+      textSelection.style("opacity", 0).style("display", "none");
+      return;
+    }
+
+    const selected = d3.select(event.target.parentNode).data()[0];
+    const childIds = links
+      .filter((link) => link.source.id === selected.id)
+      .map(({ target }) => target.id);
+    const hasChild = (id) => [selected.id, ...childIds].includes(id);
+
+    textSelection
+      .style("opacity", (d) => (hasChild(d.id) ? 100 : 0))
+      .style("display", (d) => (hasChild(d.id) ? "inline-block" : "none"));
   };
 
   const handleMouseOver = useCallback(
@@ -221,7 +246,17 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
             .append("path")
             .attr("class", "line")
             .attr("stroke", brightStrokeColor())
-            .style("stroke-width", (d) => `${d.weight * LINK_STROKE_WIDTH}px`)
+            .style("stroke-width", (d) => {
+              if (!d.target.childCount || d.target.childCount < 2) {
+                return `${LINK_STROKE_WIDTH}px`;
+              }
+
+              const thickness =
+                d.target.childCount > MAX_LINK_STROKE
+                  ? MAX_LINK_STROKE
+                  : d.target.childCount;
+              return `${thickness * LINK_STROKE_WIDTH}px`;
+            })
             .call(linkStyle),
         (update) => {
           update
@@ -235,7 +270,10 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
                 const linkCount = links.filter(
                   (link) => link.source.id === d.target.id
                 );
-                const thickness = linkCount.length + 1; // add +1 for new link not counted yet
+                const thickness =
+                  linkCount.length + 1 > MAX_LINK_STROKE
+                    ? MAX_LINK_STROKE
+                    : linkCount.length + 1; // add +1 for new link not counted yet
                 return `${thickness * LINK_STROKE_WIDTH}px`;
               }
             });
@@ -253,17 +291,19 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
           g.append("circle")
             .attr("class", "circle")
             .call(circleStyle)
-            .on("mouseover", handleMouseOver)
-            .on("mouseout", handleMouseOut);
+            .on("click", (event) => handleClickShowNames(event, true));
+          // .on("mouseover", handleMouseOver)
+          // .on("mouseout", handleMouseOut);
 
           const gText = g
             .append("g")
             .style("opacity", 0)
+            .style("display", "none")
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
-            )
-            .on("mouseover", handleMouseOver)
-            .on("mouseout", handleMouseOut);
+            );
+          // .on("mouseover", handleMouseOver)
+          // .on("mouseout", handleMouseOut);
 
           // Measure text and Remove
           gText
@@ -335,11 +375,17 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
       if (event.target.tagName === "svg") {
         zoomTo(centerZoom(width), height / 2);
       } else {
-        handleNodeClickZoom(event);
+        handleNodeDoubleClickZoom(event);
       }
     });
     // 2 - initialize centering
     zoomTo(centerZoom(width), height / 2); // initial centering
+
+    svg.on("click", (event) => {
+      if (event.target.tagName === "svg") {
+        handleClickShowNames(event);
+      }
+    });
 
     updateViewportDimensions();
     window.addEventListener("resize", throttledResize);

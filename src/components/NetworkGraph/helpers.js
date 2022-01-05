@@ -4,6 +4,7 @@ import {
   LINK_DISTANCE,
   ARM_STRENGTH,
   ARM_MAX_DISTANCE,
+  HOVER_RADIUS,
 } from "../../constants";
 
 // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
@@ -33,16 +34,17 @@ export const buildSimulation = () => {
       d3
         .forceLink()
         .id(({ id }) => id)
-        .distance(LINK_DISTANCE)
-        .strength(2)
+        .distance((d) => {
+          return LINK_DISTANCE * (100 / d.source.childCount);
+        })
     )
     .force(
       "charge",
       d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
     )
-    .force("collision", d3.forceCollide(COLLISION_DISTANCE + 1).iterations(10));
+    .force("collision", d3.forceCollide(COLLISION_DISTANCE));
 };
 
 export const hoverCircleCheck = (isHovered, r) => {
-  return isHovered ? r * 2 : r;
+  return isHovered ? r * HOVER_RADIUS : r;
 };

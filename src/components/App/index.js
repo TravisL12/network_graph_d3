@@ -1,14 +1,7 @@
 import * as d3 from "d3";
 import NetworkGraph from "../NetworkGraph";
 import { CLICK, darkStrokeColor, HOVER } from "../../constants";
-import {
-  getColor,
-  simpleData,
-  generateNodes,
-  weightRandomizer,
-  randomizer,
-  buildGyanData,
-} from "../../getData";
+import { getColor, simpleData, generateNodes, randomizer } from "../../getData";
 import {
   SAppContainer,
   StyledAppInner,
@@ -33,17 +26,6 @@ const App = () => {
   const [data, setData] = useState(simpleData());
   const [nodeEvent, setNodeEvent] = useState(null);
 
-  const fetchData = () => {
-    fetch(`${process.env.PUBLIC_URL}/data/planets.json`)
-      .then((d) => d.json())
-      .then((values) => {
-        const vals = buildGyanData(values);
-        // console.log(vals);
-      });
-  };
-
-  // useEffect(fetchData, []);
-
   const { nodes, links } = data;
   const grouped = d3.groups(links, (d) => d.source.id || d.source);
   const nodeLookup = nodes.reduce((acc, d) => {
@@ -64,33 +46,32 @@ const App = () => {
         source: source.id || source,
         target: target.id || target,
         color: source.color,
-        weight: weightRandomizer(),
       });
     }
     setData({ ...data, links: [...data.links, ...newLinks] });
   };
 
-  const addNodes = (id, parentNode = null) => {
-    const copyNodes = [...data.nodes];
-    const root = copyNodes.find((node) => (node.id || node) === id);
+  // const addNodes = (id, parentNode = null) => {
+  //   const copyNodes = [...data.nodes];
+  //   const root = copyNodes.find((node) => (node.id || node) === id);
 
-    if (!root.isParent) {
-      root.color = parentNode.isRoot
-        ? getColor()
-        : darkStrokeColor(parentNode, 0.6);
-    }
+  //   if (!root.isParent) {
+  //     root.color = parentNode.isRoot
+  //       ? getColor()
+  //       : darkStrokeColor(parentNode, 0.6);
+  //   }
 
-    root.isParent = true;
-    const { nodes: newNodes, links: newLinks } = generateNodes(
-      root,
-      root.color
-    );
+  //   root.isParent = true;
+  //   const { nodes: newNodes, links: newLinks } = generateNodes(
+  //     root,
+  //     root.color
+  //   );
 
-    setData({
-      nodes: [...copyNodes, ...newNodes],
-      links: [...data.links, ...newLinks],
-    });
-  };
+  //   setData({
+  //     nodes: [...copyNodes, ...newNodes],
+  //     links: [...data.links, ...newLinks],
+  //   });
+  // };
 
   const mouseEvent = (nodeId, type) => {
     const node = findNode(nodeId);
@@ -130,9 +111,6 @@ const App = () => {
                       <StyledAddButton onClick={() => mouseEvent(id, CLICK)}>
                         {parentNode.name}
                       </StyledAddButton>
-                      <StyledAddButton onClick={() => addNodes(parentNode.id)}>
-                        Add
-                      </StyledAddButton>
                     </SParentListItem>
                     <SChildList>
                       {children.map((child) => {
@@ -149,13 +127,6 @@ const App = () => {
                             >
                               {cNode.name}
                             </StyledAddButton>
-                            {!cNode.isParent && (
-                              <StyledAddButton
-                                onClick={() => addNodes(cNode.id, sNode)}
-                              >
-                                Add
-                              </StyledAddButton>
-                            )}
                           </SChildListItem>
                         );
                       })}
