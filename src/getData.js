@@ -125,14 +125,45 @@ export const buildGyanData = (data) => {
   const childVals = groupBy(values, "child_id");
   const nodes = [];
   const links = [];
-  [...Object.entries(childVals), ...Object.entries(vals)].forEach(([id, v]) => {
-    nodes.push({
-      id: +id,
-      name: v[0].parent_name,
-      color: getColor(),
+
+  // create nodes
+  [...Object.entries(childVals), ...Object.entries(vals)]
+    .filter(([id]) => id)
+    .forEach(([id, v]) => {
+      const color = getColor();
+      const isRoot = id == v[0].root_id;
+      nodes.push({
+        id,
+        name: v[0].parent_name,
+        color: isRoot ? "magenta" : color,
+        isRoot,
+      });
+      v.forEach((child) => {
+        const childId =
+          child.toc_sequence !== ""
+            ? `${id}-${child.toc_sequence}`
+            : String(child.child_id);
+
+        if (child.toc_sequence !== "") {
+          nodes.push({
+            id: childId,
+            name: child.child_name,
+            color,
+          });
+        }
+      });
     });
+
+  [...Object.entries(childVals), ...Object.entries(vals)].forEach(([id, v]) => {
     v.forEach((child) => {
-      links.push({ source: +id, target: +child.child_id, color: getColor() });
+      const childId =
+        child.toc_sequence !== ""
+          ? `${id}-${child.toc_sequence}`
+          : String(child.child_id);
+
+      if (child.child_id && id != childId) {
+        links.push({ source: String(id), target: childId, color: getColor() });
+      }
     });
   });
   return {

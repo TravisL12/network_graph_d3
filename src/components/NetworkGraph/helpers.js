@@ -32,7 +32,7 @@ export const buildSimulation = () => {
       "link",
       d3
         .forceLink()
-        .id(({ id }) => id)
+        .id((d) => d.id || d)
         .distance(LINK_DISTANCE)
         .strength(2)
     )

@@ -51,7 +51,7 @@ const App = () => {
   }, {});
 
   const findNode = (node) => {
-    return typeof node === "number" ? nodeLookup[node] : node;
+    return nodeLookup?.[node] || node;
   };
 
   const addLinks = () => {

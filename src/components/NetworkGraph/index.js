@@ -64,8 +64,8 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     const { link, node } = getNodes();
     const { width, height } = getHeightWidth();
 
-    nodes[0].x = centerZoom(width);
-    nodes[0].y = height / 2;
+    // nodes[0].x = centerZoom(width);
+    // nodes[0].y = height / 2;
 
     link.attr("d", positionLink);
     node
