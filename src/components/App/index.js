@@ -116,7 +116,7 @@ const App = () => {
               <h3>{nodes[0]?.name}</h3>
               {grouped.map(([id, children]) => {
                 const parentNode = findNode(id);
-                // if (!parentNode.isParent) return null;
+                if (!parentNode.isParent) return null;
 
                 return (
                   <ul key={`parent-${id}`}>

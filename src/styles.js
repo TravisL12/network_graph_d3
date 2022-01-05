@@ -82,7 +82,7 @@ export const StyledAddButton = styled.button`
 
 export const SChildList = styled.ul`
   padding: 0;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.01);
 `;
 
 const SListItem = styled.li`
@@ -91,7 +91,7 @@ const SListItem = styled.li`
   align-items: flex-start;
 
   &:nth-child(even) {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.03);
   }
 `;
 

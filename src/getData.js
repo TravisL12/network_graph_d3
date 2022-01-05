@@ -137,6 +137,7 @@ export const buildGyanData = (data) => {
         name: v[0].parent_name,
         color: isRoot ? "magenta" : color,
         isRoot,
+        isParent: true,
         x: randomizer(800, 250),
         y: randomizer(800, 250),
       });
@@ -152,8 +153,8 @@ export const buildGyanData = (data) => {
             name: child.child_name,
             color,
             isRoot: false,
-            x: randomizer(800, 250),
-            y: randomizer(800, 250),
+            x: randomizer(1000, 500),
+            y: randomizer(1000, 500),
           });
         }
       });
