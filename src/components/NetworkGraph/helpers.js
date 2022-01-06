@@ -28,19 +28,30 @@ export const getHeightWidth = () => {
 };
 
 const linkDistance = (d) => {
-  return LINK_DISTANCE;
+  return d.isRoot
+    ? LINK_DISTANCE * 5
+    : d.isParent
+    ? LINK_DISTANCE * 1
+    : LINK_DISTANCE * 0.2;
 };
 
+// GOOD
+// makes circles around parent nodes
 const linkStrength = (d) => {
-  return !d.target.isParent ? LINK_STRENGTH : LINK_STRENGTH / 2;
+  return d.target.isParent ? 0 : 0.2;
 };
 
+// adjust distance
 const forceBodyStrength = (d) => {
-  return d.isParent ? 3 * ARM_STRENGTH : ARM_STRENGTH / 2;
+  return d.isParent ? 0 : Math.round(d.childCount * -0.3);
 };
 
 const collideDistance = (d) => {
-  return d.isParent ? COLLIDE_DISTANCE * 3 : COLLIDE_DISTANCE * 1.2;
+  return d.isRoot
+    ? CIRCLE_BASE_RADIUS * 5
+    : d.isParent
+    ? CIRCLE_BASE_RADIUS * 2
+    : CIRCLE_BASE_RADIUS * 1.1;
 };
 
 export const buildSimulation = ({ height, width }) => {
@@ -54,13 +65,7 @@ export const buildSimulation = ({ height, width }) => {
         .distance(linkDistance)
         .strength(linkStrength)
     )
-    .force(
-      "charge",
-      d3
-        .forceManyBody()
-        .strength(forceBodyStrength)
-        .distanceMax(ARM_MAX_DISTANCE)
-    )
+    .force("charge", d3.forceManyBody().strength(forceBodyStrength))
     .force("collision", d3.forceCollide(collideDistance))
     .force("center", d3.forceCenter(width / 2, height / 2));
 };

@@ -42,24 +42,15 @@ const lorem = new LoremIpsum({
   },
 });
 
-// const light = 1;
-// const mid = 5;
-// const heavy = 10;
-// export function weightRandomizer() {
-//   const lights = new Array(10).fill(light);
-//   const mids = new Array(0).fill(mid);
-//   const heavies = new Array(0).fill(heavy);
-//   const weighting = [...lights, ...mids, ...heavies];
-//   const idx = randomizer(weighting.length - 1);
-//   return weighting[idx];
-// }
-
 export function randomizer(max = 1, min = 0) {
   return Math.round(Math.random() * (max - min) + min);
 }
 
+let colorIdx = 0;
 export const getColor = () => {
-  return colors[randomizer(colors.length - 1)];
+  const c = colors[colorIdx % (colors.length - 1)];
+  colorIdx += 1;
+  return c;
 };
 
 export const generateNodes = (root, color, num = 1) => {
@@ -72,6 +63,7 @@ export const generateNodes = (root, color, num = 1) => {
       id,
       name: lorem.generateWords(2),
       color: color || root.color,
+      childCount: num,
     };
 
     node.x = root?.x;
