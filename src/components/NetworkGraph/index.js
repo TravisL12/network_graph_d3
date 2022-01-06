@@ -280,6 +280,23 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         }
       );
 
+    function dragstarted(d) {
+      if (!d.active) simulation.alphaTarget(0.1).restart();
+      d.subject.fx = d.x;
+      d.subject.fy = d.y;
+    }
+
+    function dragged(d) {
+      d.subject.fx = d.x;
+      d.subject.fy = d.y;
+    }
+
+    function dragended(d) {
+      if (!d.active) simulation.alphaTarget(0.1);
+      d.subject.fx = d.x;
+      d.subject.fy = d.y;
+    }
+
     node
       .data(nodes, (d) => {
         return d.id;
@@ -287,6 +304,14 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
       .join(
         (enter) => {
           const g = enter.append("g").attr("class", "node");
+
+          g.call(
+            d3
+              .drag()
+              .on("start", dragstarted)
+              .on("drag", dragged)
+              .on("end", dragended)
+          );
 
           g.append("circle")
             .attr("class", "circle")
