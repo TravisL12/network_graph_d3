@@ -65,15 +65,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
 
-    nodes[0].x = centerZoom(width);
-    nodes[0].y = height / 2;
-
-    link
-      // .attr("x1", ({ source }) => source.x)
-      // .attr("y1", ({ source }) => source.y)
-      // .attr("x2", ({ target }) => target.x)
-      // .attr("y2", ({ target }) => target.y);
-      .attr("d", positionLink);
+    link.attr("d", positionLink);
 
     node
       .selectAll(".node circle")

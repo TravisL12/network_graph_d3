@@ -100,11 +100,13 @@ export const simpleData = () => {
 
   let nodesData = [];
   let linksData = [];
-  nodes.forEach((node) => {
+  const theta = (2 * Math.PI) / nodes.length;
+
+  nodes.forEach((node, i) => {
     node.isParent = true;
     node.color = getColor();
-    node.x = randomizer(2000); // random node spawn position
-    node.y = randomizer(1000); // random node spawn position
+    node.x = Math.cos(i * theta); // random node spawn position
+    node.y = Math.sin(i * theta); // random node spawn position
     const childCount = randomizer(120, 80);
     const children = generateNodes(node, node.color, childCount);
     nodesData = nodesData.concat(children.nodes);

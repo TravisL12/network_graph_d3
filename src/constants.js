@@ -30,7 +30,7 @@ export const MAX_LINK_STROKE = 10;
 export const LINK_STROKE_WIDTH = 0.5;
 export const LINK_DISTANCE = 100;
 
-export const ARM_STRENGTH = -100;
+export const ARM_STRENGTH = -20;
 export const ARM_MAX_DISTANCE = 10;
 
 export const ALPHA_MIN = 0.05; // stop speed
