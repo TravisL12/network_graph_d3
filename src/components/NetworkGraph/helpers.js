@@ -52,7 +52,11 @@ export const buildSimulation = ({ height, width }) => {
     .force(
       "collision",
       d3.forceCollide((d) => {
-        return d.isParent ? COLLIDE_DISTANCE * 3 : COLLIDE_DISTANCE * 1.2;
+        return d.isRoot
+          ? COLLIDE_DISTANCE * 30
+          : d.isParent
+          ? COLLIDE_DISTANCE * 2
+          : COLLIDE_DISTANCE * 1.5;
       })
     )
     .force("center", d3.forceCenter(width / 2, height / 2));

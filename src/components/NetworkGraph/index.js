@@ -102,7 +102,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
     simulation.force("link").links(links);
     simulation
       .alphaDecay(ALPHA_DECAY)
-      .alphaMin(ALPHA_MIN)
+      // .alphaMin(ALPHA_MIN)
       .alpha(ALPHA)
       .restart();
 

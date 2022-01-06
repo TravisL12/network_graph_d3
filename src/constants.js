@@ -37,7 +37,7 @@ export const ARM_MAX_DISTANCE = 5;
 export const COLLIDE_DISTANCE = CIRCLE_BASE_RADIUS;
 
 export const ALPHA_MIN = 0.05; // stop speed
-export const ALPHA = 0.25; // start speed
+export const ALPHA = 0.2; // start speed
 export const ALPHA_DECAY = 0.1; // speed to decay to stop
 
 export const X_MARGIN = 4; // margins for text/label background
