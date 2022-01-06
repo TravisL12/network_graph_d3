@@ -17,8 +17,6 @@ export const ROOT_BASE_RADIUS = CIRCLE_BASE_RADIUS * 4;
 export const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (7 / 8);
 
 export const HOVER_RADIUS = 1.4;
-
-export const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
 export const STROKE_COLOR = "#177E89";
 
 const stroke = 2;
@@ -30,7 +28,7 @@ export const CHILD_TEXT_SIZE = "12px";
 
 export const MAX_LINK_STROKE = 10;
 export const LINK_STROKE_WIDTH = 0.5;
-export const LINK_DISTANCE = 50;
+export const LINK_DISTANCE = 100;
 
 export const ARM_STRENGTH = -100;
 export const ARM_MAX_DISTANCE = 10;

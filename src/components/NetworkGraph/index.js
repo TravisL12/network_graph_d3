@@ -42,8 +42,9 @@ import {
 
 let zoomTransform = d3.zoomIdentity;
 
-const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
+const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
   const graphRef = useRef();
+  const { width, height } = size;
   const zoom = d3
     .zoom()
     .scaleExtent([MIN_ZOOM, MAX_ZOOM])
@@ -63,12 +64,17 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
 
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
-    const { width, height } = getHeightWidth();
 
     nodes[0].x = centerZoom(width);
     nodes[0].y = height / 2;
 
-    link.attr("d", positionLink);
+    link
+      // .attr("x1", ({ source }) => source.x)
+      // .attr("y1", ({ source }) => source.y)
+      // .attr("x2", ({ target }) => target.x)
+      // .attr("y2", ({ target }) => target.y);
+      .attr("d", positionLink);
+
     node
       .selectAll(".node circle")
       .attr("cx", ({ x }) => x)
@@ -86,7 +92,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   }, [getNodes, nodes]);
 
   const simulation = useMemo(() => {
-    const sim = buildSimulation();
+    const sim = buildSimulation({ width, height });
     sim.on("tick", ticked).on("end", () => {
       nodes.forEach((node) => {
         node.fx = node.x;
@@ -95,17 +101,13 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
       sim.stop();
     });
     return sim;
-  }, [ticked]);
+  }, [ticked, width, height]);
 
   const updateSimulation = useCallback(() => {
     const { node, link } = getNodes();
-    const { width, height } = getHeightWidth();
 
     simulation.nodes(nodes);
     simulation.force("link").links(links);
-    if (!simulation.force("radial")) {
-      simulation.force("radial", d3.forceRadial(1000, width / 2, height / 2));
-    }
     simulation
       .alphaDecay(ALPHA_DECAY)
       .alphaMin(ALPHA_MIN)
@@ -177,7 +179,6 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   );
 
   const zoomTo = (x, y, scale = INITIAL_ZOOM) => {
-    const { width, height } = getHeightWidth();
     const { svg } = getNodes();
 
     svg
@@ -246,17 +247,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
             .append("path")
             .attr("class", "line")
             .attr("stroke", brightStrokeColor())
-            .style("stroke-width", (d) => {
-              if (!d.target.childCount || d.target.childCount < 2) {
-                return `${LINK_STROKE_WIDTH}px`;
-              }
-
-              const thickness =
-                d.target.childCount > MAX_LINK_STROKE
-                  ? MAX_LINK_STROKE
-                  : d.target.childCount;
-              return `${thickness * LINK_STROKE_WIDTH}px`;
-            })
+            .style("stroke-width", `${LINK_STROKE_WIDTH}px`)
             .call(linkStyle),
         (update) => {
           update
@@ -358,17 +349,8 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     updateSimulation,
   ]);
 
-  const updateViewportDimensions = useCallback(() => {
-    const { svg } = getNodes();
-    const { width, height } = getHeightWidth();
-    svg.attr("width", width).attr("height", height);
-  }, [getNodes]);
-
-  const throttledResize = throttle(updateViewportDimensions, 100);
-
   useEffect(() => {
     const { svg } = getNodes();
-    const { width, height } = getHeightWidth();
 
     // 1 - register reset
     svg.on("dblclick", (event) => {
@@ -386,10 +368,13 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         handleClickShowNames(event);
       }
     });
-
-    updateViewportDimensions();
-    window.addEventListener("resize", throttledResize);
   }, []);
+
+  useEffect(() => {
+    const { svg } = getNodes();
+
+    svg.attr("width", width).attr("height", height);
+  }, [size]);
 
   useEffect(() => {
     draw();

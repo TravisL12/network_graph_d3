@@ -22,7 +22,7 @@ function randomNode(nodes, isParents = false) {
   return n[idx];
 }
 
-const App = () => {
+const App = ({ size }) => {
   const [data, setData] = useState(simpleData());
   const [nodeEvent, setNodeEvent] = useState(null);
 
@@ -85,6 +85,7 @@ const App = () => {
         links={links}
         nodeEvent={nodeEvent}
         handleNodeEvent={mouseEvent}
+        size={size}
       />
       <StyledAppInner>
         <SHeader />

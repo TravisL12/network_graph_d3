@@ -74,8 +74,8 @@ export const generateNodes = (root, color, num = 1) => {
       color: color || root.color,
     };
 
-    node.x = randomizer(2000); // random node spawn position
-    node.y = randomizer(1000); // random node spawn position
+    node.x = root?.x;
+    node.y = root?.y;
 
     nodes.push(node);
     links.push({
@@ -103,6 +103,8 @@ export const simpleData = () => {
   nodes.forEach((node) => {
     node.isParent = true;
     node.color = getColor();
+    node.x = randomizer(2000); // random node spawn position
+    node.y = randomizer(1000); // random node spawn position
     const childCount = randomizer(120, 80);
     const children = generateNodes(node, node.color, childCount);
     nodesData = nodesData.concat(children.nodes);
