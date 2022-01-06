@@ -23,8 +23,8 @@ const stroke = 2;
 export const REGULAR_STROKE_WIDTH = `${stroke}px`;
 export const WIDE_STROKE_WIDTH = `${stroke * 1.4}px`;
 
-export const PARENT_TEXT_SIZE = "16px";
-export const CHILD_TEXT_SIZE = "12px";
+export const PARENT_TEXT_SIZE = 16;
+export const CHILD_TEXT_SIZE = 12;
 
 export const MAX_LINK_STROKE = 10;
 export const LINK_STROKE_WIDTH = 0.5;
@@ -100,11 +100,11 @@ export const textRectStyle = (rect) => {
 /**
  * zoom to fit
  * scale the text based on zoom (smaller text when high zoom scale)
- * less arm length between parent and child
- * large arm length between root and child
  * last node being hollow
- * work with predefined data, not manually creating it
  *
+ * x - less arm length between parent and child
+ * x - large arm length between root and child
+ * x - work with predefined data, not manually creating it
  * x - click to show/keep names
  * x - double click zoom to fit node with children
  * x - weighting based on number of children
