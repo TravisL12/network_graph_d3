@@ -4,7 +4,8 @@ import {
   LINK_DISTANCE,
   ARM_STRENGTH,
   ARM_MAX_DISTANCE,
-  centerZoom,
+  LINK_STRENGTH,
+  COLLIDE_DISTANCE,
 } from "../../constants";
 
 // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
@@ -35,24 +36,30 @@ export const buildSimulation = ({ height, width }) => {
         .forceLink()
         .id(({ id }) => id)
         .distance(LINK_DISTANCE)
-        .strength(1)
+        .strength((d) => {
+          return !d.target.isParent ? LINK_STRENGTH : LINK_STRENGTH / 2;
+        })
     )
     .force(
       "charge",
       d3
         .forceManyBody()
         .strength((d) => {
-          return d.isRoot
-            ? ARM_STRENGTH
-            : d.isParent
-            ? 2 * ARM_STRENGTH
-            : ARM_STRENGTH / 2;
+          return d.isParent ? 3 * ARM_STRENGTH : ARM_STRENGTH / 2;
         })
         .distanceMax(ARM_MAX_DISTANCE)
     )
-    .force("collision", d3.forceCollide(CIRCLE_BASE_RADIUS * 2))
+    .force(
+      "collision",
+      d3.forceCollide((d) => {
+        return d.isRoot
+          ? COLLIDE_DISTANCE / 3
+          : d.isParent
+          ? COLLIDE_DISTANCE * 3
+          : COLLIDE_DISTANCE * 1.2;
+      })
+    )
     .force("center", d3.forceCenter(width / 2, height / 2));
-  // .force("radial", d3.forceRadial(1000, centerZoom(width), height / 2))
 };
 
 export const hoverCircleCheck = (isHovered, r) => {

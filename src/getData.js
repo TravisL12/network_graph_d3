@@ -87,6 +87,8 @@ export const generateNodes = (root, color, num = 1) => {
   return { nodes, links };
 };
 
+const childNodes = 12;
+const randomChildCount = () => randomizer(80, 60);
 export const simpleData = () => {
   const root = {
     id: 1500,
@@ -96,7 +98,7 @@ export const simpleData = () => {
     isRoot: true,
   };
 
-  let { nodes, links } = generateNodes(root, root.color, 6);
+  let { nodes, links } = generateNodes(root, root.color, childNodes);
 
   let nodesData = [];
   let linksData = [];
@@ -107,7 +109,7 @@ export const simpleData = () => {
     node.color = getColor();
     node.x = Math.cos(i * theta); // random node spawn position
     node.y = Math.sin(i * theta); // random node spawn position
-    const childCount = randomizer(120, 80);
+    const childCount = randomChildCount();
     const children = generateNodes(node, node.color, childCount);
     nodesData = nodesData.concat(children.nodes);
     linksData = linksData.concat(children.links);
