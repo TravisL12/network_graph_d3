@@ -27,6 +27,22 @@ export const getHeightWidth = () => {
   return { width, height };
 };
 
+const linkDistance = (d) => {
+  return LINK_DISTANCE;
+};
+
+const linkStrength = (d) => {
+  return !d.target.isParent ? LINK_STRENGTH : LINK_STRENGTH / 2;
+};
+
+const forceBodyStrength = (d) => {
+  return d.isParent ? 3 * ARM_STRENGTH : ARM_STRENGTH / 2;
+};
+
+const collideDistance = (d) => {
+  return d.isParent ? COLLIDE_DISTANCE * 3 : COLLIDE_DISTANCE * 1.2;
+};
+
 export const buildSimulation = ({ height, width }) => {
   return d3
     .forceSimulation()
@@ -35,26 +51,17 @@ export const buildSimulation = ({ height, width }) => {
       d3
         .forceLink()
         .id(({ id }) => id)
-        .distance(LINK_DISTANCE)
-        .strength((d) => {
-          return !d.target.isParent ? LINK_STRENGTH : LINK_STRENGTH / 2;
-        })
+        .distance(linkDistance)
+        .strength(linkStrength)
     )
     .force(
       "charge",
       d3
         .forceManyBody()
-        .strength((d) => {
-          return d.isParent ? 3 * ARM_STRENGTH : ARM_STRENGTH / 2;
-        })
+        .strength(forceBodyStrength)
         .distanceMax(ARM_MAX_DISTANCE)
     )
-    .force(
-      "collision",
-      d3.forceCollide((d) => {
-        return d.isParent ? COLLIDE_DISTANCE * 3 : COLLIDE_DISTANCE * 1.2;
-      })
-    )
+    .force("collision", d3.forceCollide(collideDistance))
     .force("center", d3.forceCenter(width / 2, height / 2));
 };
 

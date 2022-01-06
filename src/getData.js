@@ -87,8 +87,8 @@ export const generateNodes = (root, color, num = 1) => {
   return { nodes, links };
 };
 
-const childNodes = 10;
-const randomChildCount = () => randomizer(60, 30);
+const childNodes = 25;
+const randomChildCount = () => randomizer(15, 5);
 export const simpleData = () => {
   const root = {
     id: 1500,

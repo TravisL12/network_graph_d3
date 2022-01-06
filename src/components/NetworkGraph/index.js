@@ -101,9 +101,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
     simulation.nodes(nodes);
     simulation.force("link").links(links);
     simulation
-      .alphaDecay(ALPHA_DECAY)
-      .alphaMin(ALPHA_MIN)
-      .alpha(ALPHA)
+      // .alphaDecay(ALPHA_DECAY)
+      // .alphaMin(ALPHA_MIN)
+      // .alpha(ALPHA)
       .restart();
 
     // update nodes and links with current zoom position
