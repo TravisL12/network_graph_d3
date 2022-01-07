@@ -28,11 +28,9 @@ export const getHeightWidth = () => {
 };
 
 const linkDistance = (d) => {
-  return d.isRoot
-    ? LINK_DISTANCE * 5
-    : d.isParent
-    ? LINK_DISTANCE * 1
-    : LINK_DISTANCE * 0.2;
+  return d.target.isParent
+    ? LINK_DISTANCE * d.source.childCount * 0.2
+    : LINK_DISTANCE * 0.1;
 };
 
 // GOOD
@@ -43,7 +41,7 @@ const linkStrength = (d) => {
 
 // adjust distance
 const forceBodyStrength = (d) => {
-  return d.isParent ? 0 : Math.round(d.childCount * -0.3);
+  return d.isParent ? -0.1 : Math.round(d.childCount * -4);
 };
 
 const collideDistance = (d) => {

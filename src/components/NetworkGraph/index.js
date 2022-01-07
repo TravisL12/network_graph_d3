@@ -65,7 +65,12 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
 
-    link.attr("d", positionLink);
+    link
+      .attr("x1", ({ source }) => source.x)
+      .attr("y1", ({ source }) => source.y)
+      .attr("x2", ({ target }) => target.x)
+      .attr("y2", ({ target }) => target.y)
+      .attr("d", positionLink);
 
     node
       .selectAll(".node circle")
@@ -274,9 +279,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
           g.append("circle")
             .attr("class", "circle")
             .call(circleStyle)
-            .on("click", (event) => handleClickShowNames(event, true));
-          // .on("mouseover", handleMouseOver)
-          // .on("mouseout", handleMouseOut);
+            .on("click", (event) => handleClickShowNames(event, true))
+            .on("mouseover", handleMouseOver)
+            .on("mouseout", handleMouseOut);
 
           const gText = g
             .append("g")
@@ -284,9 +289,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
             .style("display", "none")
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
-            );
-          // .on("mouseover", handleMouseOver)
-          // .on("mouseout", handleMouseOut);
+            )
+            .on("mouseover", handleMouseOver)
+            .on("mouseout", handleMouseOut);
 
           // Measure text and Remove
           gText

@@ -76,7 +76,33 @@ export const generateNodes = (root, color, num = 1) => {
       color: root.color,
     });
   }
+
   return { nodes, links };
+};
+
+const childLevels = 1;
+const generateChild = (nodes, level = 0) => {
+  let nodesData = [];
+  let linksData = [];
+  const theta = (2 * Math.PI) / nodes.length;
+
+  nodes.forEach((node, i) => {
+    node.isParent = true;
+    node.color = getColor();
+    // node.x = Math.cos(i * theta); // random node spawn position
+    // node.y = Math.sin(i * theta); // random node spawn position
+    const childCount = randomChildCount();
+    const children = generateNodes(node, node.color, childCount);
+    if (level < childLevels) {
+      const [n2, l2] = generateChild([children.nodes[0]], level + 1);
+      nodesData = nodesData.concat(n2);
+      linksData = linksData.concat(l2);
+    }
+    nodesData = nodesData.concat(children.nodes);
+    linksData = linksData.concat(children.links);
+  });
+
+  return [nodesData, linksData];
 };
 
 const childNodes = 25;
@@ -92,20 +118,8 @@ export const simpleData = () => {
 
   let { nodes, links } = generateNodes(root, root.color, childNodes);
 
-  let nodesData = [];
-  let linksData = [];
-  const theta = (2 * Math.PI) / nodes.length;
+  const [nodesData, linksData] = generateChild(nodes);
 
-  nodes.forEach((node, i) => {
-    node.isParent = true;
-    node.color = getColor();
-    node.x = Math.cos(i * theta); // random node spawn position
-    node.y = Math.sin(i * theta); // random node spawn position
-    const childCount = randomChildCount();
-    const children = generateNodes(node, node.color, childCount);
-    nodesData = nodesData.concat(children.nodes);
-    linksData = linksData.concat(children.links);
-  });
   return {
     nodes: [root, ...nodes, ...nodesData],
     links: [...links, ...linksData],
