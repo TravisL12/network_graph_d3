@@ -88,9 +88,9 @@ const generateChild = (nodes, level = 0) => {
 
   nodes.forEach((node, i) => {
     node.isParent = true;
-    node.color = getColor();
     const childCount = level > 0 ? level + 1 : randomChildCount();
     if (level === 0) {
+      node.color = getColor();
       node.x = Math.cos(i * theta); // random node spawn position
       node.y = Math.sin(i * theta); // random node spawn position
     } else {

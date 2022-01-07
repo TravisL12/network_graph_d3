@@ -71,7 +71,6 @@ export const buildSimulation = ({ height, width }) => {
       d3
         .forceRadial(
           (d) => {
-            if (d.isParent && !d.isRoot) console.log(d.childCount * 100);
             return d.isRoot
               ? 0
               : d.level
@@ -84,7 +83,6 @@ export const buildSimulation = ({ height, width }) => {
           height / 2
         )
         .strength((d) => {
-          console.log(d);
           return d.isParent ? 1 : 0;
         })
     );

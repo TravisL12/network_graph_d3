@@ -142,13 +142,14 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
         textSelection.style("display", (d) =>
           hasChild(d.id) ? "inline-block" : "none"
         );
-        link.attr("stroke", (d) =>
+        linkSelection.attr("stroke", (d) =>
           hasChild(d.source.id) ? darkStrokeColor(d) : darkStrokeColor(d, 1)
         );
-        link.attr("stroke-width", (d) => {
+        linkSelection.attr("stroke-width", (d) => {
           const val = hasChild(d.source.id)
-            ? `${10 * LINK_STROKE_WIDTH}px`
-            : `${5 * LINK_STROKE_WIDTH}px`;
+            ? `${20 * LINK_STROKE_WIDTH}px`
+            : `${LINK_STROKE_WIDTH}px`;
+          console.log(val);
           return val;
         });
         circleSelection.attr("r", (d) =>
