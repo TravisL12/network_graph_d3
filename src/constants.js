@@ -26,7 +26,7 @@ export const WIDE_STROKE_WIDTH = `${stroke * 1.4}px`;
 export const PARENT_TEXT_SIZE = 16;
 export const CHILD_TEXT_SIZE = 12;
 
-export const MAX_LINK_STROKE = 10;
+export const MAX_LINK_STROKE = 3;
 export const LINK_STROKE_WIDTH = 0.5;
 export const LINK_DISTANCE = 1;
 export const LINK_STRENGTH = 1;

@@ -120,7 +120,10 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
     (selectedNode) => {
       const { node, link } = getNodes();
 
-      const linkSelection = link.transition().duration(HOVER_DURATION);
+      const linkSelection = link
+        .select(".line")
+        .transition()
+        .duration(HOVER_DURATION);
       const circleSelection = node
         .select(".circle")
         .transition()
@@ -142,6 +145,12 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
         linkSelection.attr("stroke", (d) =>
           hasChild(d.source.id) ? darkStrokeColor(d) : darkStrokeColor(d, 1)
         );
+        linkSelection.attr("stroke-width", (d) => {
+          const val = hasChild(d.source.id)
+            ? `${10 * LINK_STROKE_WIDTH}px`
+            : `${5 * LINK_STROKE_WIDTH}px`;
+          return val;
+        });
         circleSelection.attr("r", (d) =>
           hoverCircleCheck(hasChild(d.id), getNodeRadius(d))
         );
@@ -238,34 +247,21 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
         links,
         (d) => `${d.source.id || d.source}-${d.target.id || d.target}`
       )
-      .join(
-        (enter) =>
-          enter
-            .append("path")
-            .attr("class", "line")
-            .attr("stroke", brightStrokeColor())
-            .style("stroke-width", `${LINK_STROKE_WIDTH}px`)
-            .call(linkStyle),
-        (update) => {
-          update
-            .style("stroke", (d) => {
-              if (d.target.isParent) {
-                return d.target.color;
-              }
-            })
-            .style("stroke-width", (d) => {
-              if (d.target.isParent) {
-                const linkCount = links.filter(
-                  (link) => link.source.id === d.target.id
-                );
-                const thickness =
-                  linkCount.length + 1 > MAX_LINK_STROKE
-                    ? MAX_LINK_STROKE
-                    : linkCount.length + 1; // add +1 for new link not counted yet
-                return `${thickness * LINK_STROKE_WIDTH}px`;
-              }
-            });
-        }
+      .join((enter) =>
+        enter
+          .append("path")
+          .attr("class", "line")
+          .attr("stroke", brightStrokeColor())
+          .style(
+            "stroke-width",
+            (d) =>
+              `${
+                (d.source.childCount > MAX_LINK_STROKE
+                  ? MAX_LINK_STROKE
+                  : d.source.childCount) * LINK_STROKE_WIDTH
+              }px`
+          )
+          .call(linkStyle)
       );
 
     node
