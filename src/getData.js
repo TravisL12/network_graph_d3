@@ -42,24 +42,15 @@ const lorem = new LoremIpsum({
   },
 });
 
-// const light = 1;
-// const mid = 5;
-// const heavy = 10;
-// export function weightRandomizer() {
-//   const lights = new Array(10).fill(light);
-//   const mids = new Array(0).fill(mid);
-//   const heavies = new Array(0).fill(heavy);
-//   const weighting = [...lights, ...mids, ...heavies];
-//   const idx = randomizer(weighting.length - 1);
-//   return weighting[idx];
-// }
-
 export function randomizer(max = 1, min = 0) {
   return Math.round(Math.random() * (max - min) + min);
 }
 
+let colorIdx = 0;
 export const getColor = () => {
-  return colors[randomizer(colors.length - 1)];
+  const c = colors[colorIdx % (colors.length - 1)];
+  colorIdx += 1;
+  return c;
 };
 
 export const generateNodes = (root, color, num = 1) => {
@@ -72,6 +63,7 @@ export const generateNodes = (root, color, num = 1) => {
       id,
       name: lorem.generateWords(2),
       color: color || root.color,
+      childCount: num,
     };
 
     node.x = root?.x;
@@ -84,11 +76,42 @@ export const generateNodes = (root, color, num = 1) => {
       color: root.color,
     });
   }
+
   return { nodes, links };
 };
 
-const childNodes = 10;
-const randomChildCount = () => randomizer(60, 30);
+const childLevels = 1;
+const generateChild = (nodes, level = 0) => {
+  let nodesData = [];
+  let linksData = [];
+  const theta = (2 * Math.PI) / nodes.length;
+
+  nodes.forEach((node, i) => {
+    node.isParent = true;
+    node.color = getColor();
+    const childCount = level > 0 ? level + 1 : randomChildCount();
+    if (level === 0) {
+      node.x = Math.cos(i * theta); // random node spawn position
+      node.y = Math.sin(i * theta); // random node spawn position
+    } else {
+      node.level = level * 10 + node.childCount;
+    }
+
+    const children = generateNodes(node, node.color, childCount);
+    if (level < childLevels) {
+      const [n2, l2] = generateChild([children.nodes[0]], level + 1);
+      nodesData = nodesData.concat(n2);
+      linksData = linksData.concat(l2);
+    }
+    nodesData = nodesData.concat(children.nodes);
+    linksData = linksData.concat(children.links);
+  });
+
+  return [nodesData, linksData];
+};
+
+const childNodes = 30;
+const randomChildCount = () => randomizer(15, 5);
 export const simpleData = () => {
   const root = {
     id: 1500,
@@ -100,20 +123,8 @@ export const simpleData = () => {
 
   let { nodes, links } = generateNodes(root, root.color, childNodes);
 
-  let nodesData = [];
-  let linksData = [];
-  const theta = (2 * Math.PI) / nodes.length;
+  const [nodesData, linksData] = generateChild(nodes);
 
-  nodes.forEach((node, i) => {
-    node.isParent = true;
-    node.color = getColor();
-    node.x = Math.cos(i * theta); // random node spawn position
-    node.y = Math.sin(i * theta); // random node spawn position
-    const childCount = randomChildCount();
-    const children = generateNodes(node, node.color, childCount);
-    nodesData = nodesData.concat(children.nodes);
-    linksData = linksData.concat(children.links);
-  });
   return {
     nodes: [root, ...nodes, ...nodesData],
     links: [...links, ...linksData],
