@@ -94,7 +94,7 @@ const generateChild = (nodes, level = 0) => {
       node.x = Math.cos(i * theta); // random node spawn position
       node.y = Math.sin(i * theta); // random node spawn position
     } else {
-      node.level = level * 10 + node.childCount;
+      node.level = level * 10 + node.childCount; // orbit distance
     }
 
     const children = generateNodes(node, node.color, childCount);

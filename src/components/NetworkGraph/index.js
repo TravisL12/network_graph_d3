@@ -139,6 +139,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
         const hasChild = (id) => [selectedNode.id, ...childIds].includes(id);
 
         textSelection.style("opacity", (d) => (hasChild(d.id) ? 100 : 0));
+        textSelection.style("display", (d) =>
+          hasChild(d.id) ? "inline-block" : "none"
+        );
         link.attr("stroke", (d) =>
           hasChild(d.source.id) ? darkStrokeColor(d) : darkStrokeColor(d, 1)
         );
