@@ -1,4 +1,43 @@
-# Getting Started with Create React App
+# Gyan Network Graph concept
+
+This is a D3 Force Directed graph that displays the relationship between topics and subtopics of search results.
+
+To build the project and start:
+
+- `yarn`
+- `yarn start`
+
+### Generated Data
+
+The data used in this project is auto-generated on first load. This data is loaded within the `getData.js` file. The graph itself uses an array of these nodes, and the connections (links) between nodes is defined by the `links` array that has the type.
+
+```
+type node = {
+    id: 1500,   // number
+    name: "Gyan", // string
+    color: "magenta", // string
+    isParent: true,  // boolean
+    isRoot: true, // boolean
+  };
+
+type link = {
+  target: node, // node type
+  source: node, // node type
+  color: color, // string
+}
+```
+
+It is worth noting the two boolean attributes (isParent, isRoot) are used to distinguish certain characteristics within the graph itself.
+
+The generated data has 3 levels of children that are generated and each child inherits the color from the parent node.
+
+### Graph constants
+
+Various constants were added throughout the graph and are found in the `constants.js` file. Not all values ended up being used but it was an easier way to adjust the graph without having to change things in many different locations.
+
+### (default ReadMe is below)
+
+## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

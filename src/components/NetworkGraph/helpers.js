@@ -1,13 +1,5 @@
 import * as d3 from "d3";
-import {
-  CIRCLE_BASE_RADIUS,
-  LINK_DISTANCE,
-  ARM_STRENGTH,
-  ARM_MAX_DISTANCE,
-  LINK_STRENGTH,
-  COLLIDE_DISTANCE,
-  centerZoom,
-} from "../../constants";
+import { CIRCLE_BASE_RADIUS, LINK_DISTANCE } from "../../constants";
 
 // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
 export const positionLink = (d) => {
@@ -16,7 +8,7 @@ export const positionLink = (d) => {
     M${d.source.x},${d.source.y}
     A${r},${r} 0 0,1 ${d.target.x},${d.target.y}
   `;
-  const straightLine = `M${d.source.x},${d.source.y} L ${d.target.x},${d.target.y}`;
+  // const straightLine = `M${d.source.x},${d.source.y} L ${d.target.x},${d.target.y}`;
   // return d.target.isParent || d.source.isRoot ? curvedLine : straightLine;
   return curvedLine;
 };

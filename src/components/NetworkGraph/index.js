@@ -106,7 +106,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
     simulation.nodes(nodes);
     simulation.force("link").links(links);
     simulation
-      // .alphaDecay(ALPHA_DECAY)
+      // .alphaDecay(ALPHA_DECAY) // alpha values help speed-up/slow down graph animation
       // .alphaMin(ALPHA_MIN)
       // .alpha(ALPHA)
       .restart();
