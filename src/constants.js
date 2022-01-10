@@ -12,32 +12,31 @@ export const HOVER_DURATION = 100;
 export const ZOOM_DURATION = 250;
 export const TEXT_BG_OPACITY = 0.8;
 
-export const CIRCLE_BASE_RADIUS = 8;
-export const ROOT_BASE_RADIUS = CIRCLE_BASE_RADIUS * 4;
-export const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (7 / 8);
+export const CIRCLE_BASE_RADIUS = 20;
+export const ROOT_BASE_RADIUS = CIRCLE_BASE_RADIUS * 2;
+export const CHILD_CIRCLE_BASE_RADIUS = CIRCLE_BASE_RADIUS * (4 / 8);
 
 export const HOVER_RADIUS = 1.4;
-
-export const COLLISION_DISTANCE = CIRCLE_BASE_RADIUS * 3;
 export const STROKE_COLOR = "#177E89";
 
 const stroke = 2;
 export const REGULAR_STROKE_WIDTH = `${stroke}px`;
 export const WIDE_STROKE_WIDTH = `${stroke * 1.4}px`;
 
-export const PARENT_TEXT_SIZE = "16px";
-export const CHILD_TEXT_SIZE = "12px";
+export const PARENT_TEXT_SIZE = 16;
+export const CHILD_TEXT_SIZE = 12;
 
-export const MAX_LINK_STROKE = 10;
+export const MAX_LINK_STROKE = 3;
 export const LINK_STROKE_WIDTH = 0.5;
-export const LINK_DISTANCE = 50;
+export const LINK_DISTANCE = 1;
+export const LINK_STRENGTH = 1;
 
-export const ARM_STRENGTH = -100;
-export const ARM_MAX_DISTANCE = 10;
+export const ARM_STRENGTH = -1;
+export const ARM_MAX_DISTANCE = 5;
 
 export const ALPHA_MIN = 0.05; // stop speed
-export const ALPHA = 0.25; // start speed
-export const ALPHA_DECAY = 0.05; // speed to decay to stop
+export const ALPHA = 0.2; // start speed
+export const ALPHA_DECAY = 0.1; // speed to decay to stop
 
 export const X_MARGIN = 4; // margins for text/label background
 export const Y_MARGIN = 0; // margins for text/label background
@@ -59,7 +58,7 @@ export const centerZoom = (width) => (3 * width) / 5;
 export const circleStyle = (circle) => {
   circle
     .attr("r", (d) => getNodeRadius(d))
-    .style("fill", (d) => d.color || brightStrokeColor(d.parent.color))
+    .style("fill", (d) => (d.isParent ? brightStrokeColor(d.color) : d.color))
     .attr("stroke", (d) => darkStrokeColor(d))
     .attr("stroke-width", REGULAR_STROKE_WIDTH);
 };
@@ -99,11 +98,11 @@ export const textRectStyle = (rect) => {
 /**
  * zoom to fit
  * scale the text based on zoom (smaller text when high zoom scale)
- * less arm length between parent and child
- * large arm length between root and child
  * last node being hollow
- * work with predefined data, not manually creating it
  *
+ * x - less arm length between parent and child
+ * x - large arm length between root and child
+ * x - work with predefined data, not manually creating it
  * x - click to show/keep names
  * x - double click zoom to fit node with children
  * x - weighting based on number of children

@@ -1,11 +1,5 @@
 import * as d3 from "d3";
-import {
-  COLLISION_DISTANCE,
-  LINK_DISTANCE,
-  ARM_STRENGTH,
-  ARM_MAX_DISTANCE,
-  HOVER_RADIUS,
-} from "../../constants";
+import { CIRCLE_BASE_RADIUS, LINK_DISTANCE } from "../../constants";
 
 // https://bl.ocks.org/emeeks/c2822e1067ff91abe24e
 export const positionLink = (d) => {
@@ -26,7 +20,32 @@ export const getHeightWidth = () => {
   return { width, height };
 };
 
-export const buildSimulation = () => {
+const linkDistance = (d) => {
+  return d.target.isParent
+    ? LINK_DISTANCE * d.source.childCount * 0.2
+    : LINK_DISTANCE * 0.1;
+};
+
+// GOOD
+// makes circles around parent nodes
+const linkStrength = (d) => {
+  return d.target.isParent ? 0 : 0.2;
+};
+
+// adjust distance
+const forceBodyStrength = (d) => {
+  return d.isParent ? -0.1 : Math.round(d.childCount * -4);
+};
+
+const collideDistance = (d) => {
+  return d.isRoot
+    ? CIRCLE_BASE_RADIUS * 5
+    : d.isParent
+    ? CIRCLE_BASE_RADIUS * 2
+    : CIRCLE_BASE_RADIUS * 1.1;
+};
+
+export const buildSimulation = ({ height, width }) => {
   return d3
     .forceSimulation()
     .force(
@@ -34,17 +53,33 @@ export const buildSimulation = () => {
       d3
         .forceLink()
         .id(({ id }) => id)
-        .distance((d) => {
-          return LINK_DISTANCE * (100 / d.source.childCount);
-        })
+        .distance(linkDistance)
+        .strength(linkStrength)
     )
+    .force("charge", d3.forceManyBody().strength(forceBodyStrength))
+    .force("collision", d3.forceCollide(collideDistance))
     .force(
-      "charge",
-      d3.forceManyBody().strength(ARM_STRENGTH).distanceMax(ARM_MAX_DISTANCE)
-    )
-    .force("collision", d3.forceCollide(COLLISION_DISTANCE));
+      "r",
+      d3
+        .forceRadial(
+          (d) => {
+            return d.isRoot
+              ? 0
+              : d.level
+              ? d.level * 50 // outmost level
+              : d.isParent
+              ? d.childCount * 50 // first parent node
+              : d.childCount * 50; // first parent children
+          },
+          width / 2,
+          height / 2
+        )
+        .strength((d) => {
+          return d.isParent ? 1 : 0;
+        })
+    );
 };
 
 export const hoverCircleCheck = (isHovered, r) => {
-  return isHovered ? r * HOVER_RADIUS : r;
+  return isHovered ? r * 2 : r;
 };

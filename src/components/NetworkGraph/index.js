@@ -42,8 +42,9 @@ import {
 
 let zoomTransform = d3.zoomIdentity;
 
-const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
+const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent, size }) => {
   const graphRef = useRef();
+  const { width, height } = size;
   const zoom = d3
     .zoom()
     .scaleExtent([MIN_ZOOM, MAX_ZOOM])
@@ -63,12 +64,14 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
 
   const ticked = useCallback(() => {
     const { link, node } = getNodes();
-    const { width, height } = getHeightWidth();
 
-    nodes[0].x = centerZoom(width);
-    nodes[0].y = height / 2;
+    link
+      .attr("x1", ({ source }) => source.x)
+      .attr("y1", ({ source }) => source.y)
+      .attr("x2", ({ target }) => target.x)
+      .attr("y2", ({ target }) => target.y)
+      .attr("d", positionLink);
 
-    link.attr("d", positionLink);
     node
       .selectAll(".node circle")
       .attr("cx", ({ x }) => x)
@@ -86,7 +89,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
   }, [getNodes, nodes]);
 
   const simulation = useMemo(() => {
-    const sim = buildSimulation();
+    const sim = buildSimulation({ width, height });
     sim.on("tick", ticked).on("end", () => {
       nodes.forEach((node) => {
         node.fx = node.x;
@@ -95,21 +98,17 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
       sim.stop();
     });
     return sim;
-  }, [ticked]);
+  }, [ticked, width, height]);
 
   const updateSimulation = useCallback(() => {
     const { node, link } = getNodes();
-    const { width, height } = getHeightWidth();
 
     simulation.nodes(nodes);
     simulation.force("link").links(links);
-    if (!simulation.force("radial")) {
-      simulation.force("radial", d3.forceRadial(1000, width / 2, height / 2));
-    }
     simulation
-      .alphaDecay(ALPHA_DECAY)
-      .alphaMin(ALPHA_MIN)
-      .alpha(ALPHA)
+      // .alphaDecay(ALPHA_DECAY) // alpha values help speed-up/slow down graph animation
+      // .alphaMin(ALPHA_MIN)
+      // .alpha(ALPHA)
       .restart();
 
     // update nodes and links with current zoom position
@@ -140,9 +139,19 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         const hasChild = (id) => [selectedNode.id, ...childIds].includes(id);
 
         textSelection.style("opacity", (d) => (hasChild(d.id) ? 100 : 0));
+        textSelection.style("display", (d) =>
+          hasChild(d.id) ? "inline-block" : "none"
+        );
         linkSelection.attr("stroke", (d) =>
           hasChild(d.source.id) ? darkStrokeColor(d) : darkStrokeColor(d, 1)
         );
+        linkSelection.attr("stroke-width", (d) => {
+          const val = hasChild(d.source.id)
+            ? `${20 * LINK_STROKE_WIDTH}px`
+            : `${LINK_STROKE_WIDTH}px`;
+          console.log(val);
+          return val;
+        });
         circleSelection.attr("r", (d) =>
           hoverCircleCheck(hasChild(d.id), getNodeRadius(d))
         );
@@ -156,7 +165,7 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         const hasChild = (id) => id === selectedNode?.id;
 
         textSelection.style("opacity", (d) => (hasChild(d.id) ? 100 : 0));
-        linkSelection.attr("stroke", (d) => darkStrokeColor(d, 1));
+        link.attr("stroke", (d) => darkStrokeColor(d, 1));
         circleSelection.attr("r", (d) =>
           hoverCircleCheck(hasChild(d.id), getNodeRadius(d))
         );
@@ -170,14 +179,12 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         // resets all nodes if not a parent (or if no node selected)
         circleSelection.call(circleStyle);
         textSelection.style("opacity", 0);
-        linkSelection.attr("stroke", (d) => darkStrokeColor(d, 1));
       }
     },
     [getNodes, links]
   );
 
   const zoomTo = (x, y, scale = INITIAL_ZOOM) => {
-    const { width, height } = getHeightWidth();
     const { svg } = getNodes();
 
     svg
@@ -240,44 +247,21 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         links,
         (d) => `${d.source.id || d.source}-${d.target.id || d.target}`
       )
-      .join(
-        (enter) =>
-          enter
-            .append("path")
-            .attr("class", "line")
-            .attr("stroke", brightStrokeColor())
-            .style("stroke-width", (d) => {
-              if (!d.target.childCount || d.target.childCount < 2) {
-                return `${LINK_STROKE_WIDTH}px`;
-              }
-
-              const thickness =
-                d.target.childCount > MAX_LINK_STROKE
+      .join((enter) =>
+        enter
+          .append("path")
+          .attr("class", "line")
+          .attr("stroke", brightStrokeColor())
+          .style(
+            "stroke-width",
+            (d) =>
+              `${
+                (d.source.childCount > MAX_LINK_STROKE
                   ? MAX_LINK_STROKE
-                  : d.target.childCount;
-              return `${thickness * LINK_STROKE_WIDTH}px`;
-            })
-            .call(linkStyle),
-        (update) => {
-          update
-            .style("stroke", (d) => {
-              if (d.target.isParent) {
-                return d.target.color;
-              }
-            })
-            .style("stroke-width", (d) => {
-              if (d.target.isParent) {
-                const linkCount = links.filter(
-                  (link) => link.source.id === d.target.id
-                );
-                const thickness =
-                  linkCount.length + 1 > MAX_LINK_STROKE
-                    ? MAX_LINK_STROKE
-                    : linkCount.length + 1; // add +1 for new link not counted yet
-                return `${thickness * LINK_STROKE_WIDTH}px`;
-              }
-            });
-        }
+                  : d.source.childCount) * LINK_STROKE_WIDTH
+              }px`
+          )
+          .call(linkStyle)
       );
 
     node
@@ -291,9 +275,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
           g.append("circle")
             .attr("class", "circle")
             .call(circleStyle)
-            .on("click", (event) => handleClickShowNames(event, true));
-          // .on("mouseover", handleMouseOver)
-          // .on("mouseout", handleMouseOut);
+            .on("click", (event) => handleClickShowNames(event, true))
+            .on("mouseover", handleMouseOver)
+            .on("mouseout", handleMouseOut);
 
           const gText = g
             .append("g")
@@ -301,9 +285,9 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
             .style("display", "none")
             .attr("class", (d) =>
               d.isParent ? "node-text parent-node" : "node-text child-node"
-            );
-          // .on("mouseover", handleMouseOver)
-          // .on("mouseout", handleMouseOut);
+            )
+            .on("mouseover", handleMouseOver)
+            .on("mouseout", handleMouseOut);
 
           // Measure text and Remove
           gText
@@ -358,17 +342,8 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
     updateSimulation,
   ]);
 
-  const updateViewportDimensions = useCallback(() => {
-    const { svg } = getNodes();
-    const { width, height } = getHeightWidth();
-    svg.attr("width", width).attr("height", height);
-  }, [getNodes]);
-
-  const throttledResize = throttle(updateViewportDimensions, 100);
-
   useEffect(() => {
     const { svg } = getNodes();
-    const { width, height } = getHeightWidth();
 
     // 1 - register reset
     svg.on("dblclick", (event) => {
@@ -386,10 +361,13 @@ const NetworkGraph = ({ nodes, links, nodeEvent, handleNodeEvent }) => {
         handleClickShowNames(event);
       }
     });
-
-    updateViewportDimensions();
-    window.addEventListener("resize", throttledResize);
   }, []);
+
+  useEffect(() => {
+    const { svg } = getNodes();
+
+    svg.attr("width", width).attr("height", height);
+  }, [size]);
 
   useEffect(() => {
     draw();
